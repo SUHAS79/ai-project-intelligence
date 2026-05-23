@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Project Intelligence",
-  description: "AI-powered project management for small teams",
+  title: "NAMO — Neural Analytics for Management Optimization",
+  description: "Predict projects before they slip.",
 };
 
 export default function RootLayout({
@@ -26,10 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen bg-slate-50 antialiased">
+      <body className="min-h-screen antialiased">
         <QueryProvider>
           {children}
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="top-right" closeButton />
         </QueryProvider>
       </body>
     </html>

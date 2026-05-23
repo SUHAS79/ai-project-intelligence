@@ -1,98 +1,116 @@
-# AI Project Intelligence
+# NAMO — Neural Analytics for Management Optimization
 
-> AI-powered project management for small teams — built with Next.js, Prisma, and real heuristic intelligence.
+**Predict projects before they slip.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://typescriptlang.org)
-[![Prisma](https://img.shields.io/badge/Prisma-7-teal)](https://prisma.io)
-[![SQLite](https://img.shields.io/badge/SQLite-local-green)](https://sqlite.org)
+A full-stack AI-powered project management tool that continuously analyzes your projects and surfaces risks, blockers, and forecasts — before your next standup.
+
+---
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| 📋 **Projects & Tasks** | Full CRUD with status, priority, owner, dates |
-| 🔗 **Task Dependencies** | Define which tasks block others |
-| 📅 **Gantt Timeline** | Custom SVG Gantt with dependency arrows |
-| ⚠️ **Risk Register** | Log risks with probability, impact, mitigation |
-| 🧠 **AI Insights** | Delay detection, critical path, bottlenecks, suggestions |
-| 📊 **Health Score** | 0–100 project health with color coding |
-| 📄 **Weekly Reports** | Auto-generated, copyable status reports |
-| 🌱 **Demo Data** | 3 seeded projects, instantly explorable |
+### 🧠 AI Insights
+- **Health score** (0–100) computed from task velocity, blockage rate, and risk severity
+- **Critical path** detection — visualizes the longest dependency chain in your project
+- **Bottleneck analysis** — identifies which tasks are blocking the most work
+- **Delay detection** — flags overdue tasks with severity ratings (CRITICAL / HIGH / MEDIUM / LOW)
+- **Smart recommendations** — pattern-matched suggestions for common project failure modes
 
-## Tech Stack
+### 📈 Forecasting
+- **Burndown chart** — planned vs actual vs AI-projected trajectory
+- **Completion forecast** — velocity-based prediction with confidence rating (Low/Medium/High)
+- **Schedule variance** — exactly how many days ahead or behind you are
+- **Weekly velocity** — bar chart of tasks completed per week over last 6 weeks
 
-- **Framework**: Next.js 16 (App Router + API Routes)
-- **Database**: SQLite via Prisma v7 + better-sqlite3
-- **UI**: Tailwind CSS v4 + lucide-react
-- **State**: TanStack React Query v5
-- **Forms**: React Hook Form v7 + Zod v4
-- **Notifications**: Sonner toasts
+### 📋 Project Management
+- **Task management** — status, priority, owner, start/end dates, dependencies
+- **Gantt timeline** — custom SVG chart with today marker and dependency visualization
+- **Risk register** — probability/impact matrix, mitigation tracking, status transitions
+- **Weekly report** — auto-generated executive summary, ready to copy to Slack or email
+
+---
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| Framework | Next.js 16 (App Router, TypeScript) |
+| Database | SQLite + Prisma v7 |
+| UI | Tailwind CSS v4 |
+| Charts | Recharts |
+| Forms | React Hook Form + Zod v4 |
+| Icons | Lucide React |
+| Toasts | Sonner |
+| Server state | TanStack React Query v5 |
+
+---
 
 ## Quick Start
 
 ```bash
 # Clone the repo
-git clone https://github.com/SUHAS79/ai-project-intelligence
+git clone https://github.com/YOUR_USERNAME/ai-project-intelligence
 cd ai-project-intelligence
 
 # Install dependencies
 npm install --legacy-peer-deps
 
-# Run database migrations
-npx prisma migrate dev
+# Generate Prisma client
+npx prisma generate
 
-# Seed with demo data
+# Create DB and run migrations
+npx prisma migrate dev --name init
+
+# Seed with demo data (3 projects, 24 tasks, 6 risks)
 npm run seed
 
 # Start the dev server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll see 3 demo projects with live AI insights.
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Demo Data
+
+The seed script creates three realistic projects:
+
+1. **Mobile App Launch Q3** — Active project with overdue tasks, blocked items, and an unresolved HIGH-impact risk. AI insights fire immediately.
+2. **Website Redesign** — On-hold project with mixed task statuses.
+3. **API Integration Sprint** — Active sprint with dependency chains.
+
+Re-seed at any time: `npm run seed` (wipes and recreates all demo data).
+
+---
 
 ## Project Structure
 
 ```
-├── app/
-│   ├── api/           # All API routes (projects, tasks, risks, insights, report)
-│   ├── generated/     # Prisma client (auto-generated, don't edit)
-│   ├── layout.tsx     # Root layout
-│   └── page.tsx       # Dashboard
-├── components/
-│   ├── tabs/          # TasksTab, GanttTab, RisksTab, InsightsTab, ReportTab
-│   ├── ui/            # Badge, Button, Input, Modal, Select, Textarea
-│   └── ...            # AppShell, Sidebar, ProjectCard, ProjectHub, Modals
-├── lib/
-│   ├── insights.ts    # AI heuristics engine
-│   ├── prisma.ts      # Database client singleton
-│   ├── report.ts      # Report generator
-│   └── utils.ts       # Shared utilities + status configs
-├── prisma/
-│   ├── schema.prisma  # Database schema
-│   └── seed.ts        # Demo data seeder
-├── spec.md            # Product specification
-└── todo.md            # Roadmap
+app/                    Next.js App Router pages + API routes
+components/
+  tabs/                 TasksTab, ForecastTab, GanttTab, RisksTab, InsightsTab, ReportTab
+  ui/                   Button, Badge primitives
+lib/
+  insights.ts           AI heuristics engine
+  forecast.ts           Burndown + velocity computations
+  report.ts             Weekly report generator
+  prisma.ts             DB client singleton
+prisma/
+  schema.prisma         DB schema
+  seed.ts               Demo data seeder
+docs/                   Product, architecture, roadmap, decisions
 ```
 
-## AI Insights (How It Works)
+---
 
-The AI layer uses pure rule-based heuristics — no API key required, no hallucination risk:
+## Architecture Notes
 
-1. **Delay Detection** — Tasks past their end date with severity bucketing
-2. **Critical Path** — Topological sort + dynamic programming on the dependency graph
-3. **Bottleneck Detection** — Tasks with the most dependents (cascading risk)
-4. **Risk Flags** — High-severity risks without mitigation plans
-5. **Health Score** — Weighted formula: task health (40%) + risk health (30%) + momentum (30%)
+- **No auth** — single-user, demo-ready out of the box
+- **No API keys** — all AI insights are rule-based heuristics (critical path, bottleneck scoring, health formulas)
+- **SQLite** — swap to PostgreSQL by changing one line in `schema.prisma`
+- See `docs/architecture.md` for full system design
 
-These will be upgraded to LLM-powered suggestions (Claude/GPT-4) in v2 without changing the API interface.
-
-## Upgrading to PostgreSQL
-
-Only two changes needed:
-1. In `prisma/schema.prisma`: change `provider = "sqlite"` → `provider = "postgresql"`
-2. In `.env`: update `DATABASE_URL` to your PostgreSQL connection string
-3. In `lib/prisma.ts` and `prisma/seed.ts`: use `@prisma/adapter-pg` instead of `better-sqlite3`
+---
 
 ## License
 
