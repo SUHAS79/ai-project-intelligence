@@ -17,7 +17,10 @@ const ProjectFormSchema = z.object({
   status: z.enum(["ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"]),
   startDate: z.string().min(1, "Start date required"),
   endDate: z.string().min(1, "End date required"),
-});
+}).refine(
+  (data) => !data.startDate || !data.endDate || data.endDate >= data.startDate,
+  { message: "End date must be on or after start date", path: ["endDate"] }
+);
 
 type ProjectFormData = z.infer<typeof ProjectFormSchema>;
 

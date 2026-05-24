@@ -40,6 +40,7 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
     lg: "max-w-2xl",
     xl: "max-w-4xl",
   };
+  // mx-4 ensures modal doesn't overflow on mobile screens
 
   return (
     <div
@@ -50,7 +51,7 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div
         className={cn(
-          "relative w-full bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]",
+          "relative w-full mx-4 bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]",
           sizeClasses[size]
         )}
       >

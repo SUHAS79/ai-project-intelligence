@@ -18,11 +18,14 @@ const TaskFormSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   assignedToId: z.string().optional().nullable(),
-  estimatedHours: z.number().min(0).optional().nullable(),
+  estimatedHours: z.number().min(0.5, "Estimated hours must be greater than 0").optional().nullable(),
   startDate: z.string().min(1, "Start date required"),
   endDate: z.string().min(1, "End date required"),
   dependencyIds: z.array(z.string()).default([]),
-});
+}).refine(
+  (data) => !data.startDate || !data.endDate || data.endDate >= data.startDate,
+  { message: "End date must be on or after start date", path: ["endDate"] }
+);
 
 type TaskFormData = z.infer<typeof TaskFormSchema>;
 
@@ -160,7 +163,7 @@ export function TaskModal({
           <div className="relative">
             <input
               type="number"
-              min="0"
+              min="0.5"
               step="0.5"
               placeholder="e.g. 8"
               className="w-full border border-slate-200 rounded-lg px-3 py-2 pr-12 text-sm text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
@@ -170,6 +173,9 @@ export function TaskModal({
               hours
             </span>
           </div>
+          {errors.estimatedHours && (
+            <p className="text-xs text-red-500 mt-0.5">{errors.estimatedHours.message}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">

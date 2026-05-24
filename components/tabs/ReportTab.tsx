@@ -28,6 +28,7 @@ const PERIODS: { value: ReportPeriod; label: string }[] = [
 
 export function ReportTab({ projectId }: { projectId: string }) {
   const [period, setPeriod] = useState<ReportPeriod>("weekly");
+  const [copied, setCopied] = useState(false);
 
   const { data: report, isLoading, error } = useQuery<ProjectReport>({
     queryKey: ["report", projectId, period],
@@ -42,6 +43,8 @@ export function ReportTab({ projectId }: { projectId: string }) {
     if (!report) return;
     navigator.clipboard.writeText(buildReportText(report));
     toast.success("Report copied to clipboard");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const periodCompletedLabel =
@@ -94,8 +97,17 @@ export function ReportTab({ projectId }: { projectId: string }) {
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleCopy}>
-          <Copy className="w-3.5 h-3.5" />
-          Copy
+          {copied ? (
+            <>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              Copy
+            </>
+          )}
         </Button>
       </div>
 

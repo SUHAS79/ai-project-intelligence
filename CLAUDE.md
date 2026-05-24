@@ -192,3 +192,17 @@ return new PrismaClient({ adapter } as any);
 - SQLite only (swap `provider` in schema.prisma + adapter for PostgreSQL)
 - AI insights are rule-based heuristics, not LLM (upgrade path: replace `lib/insights.ts` functions)
 - No real-time updates (refresh after mutations via `router.refresh()`)
+
+## Polish Pass (completed 2026-05-25)
+- Mobile sidebar: hamburger toggle on < lg screens (AppShellClient.tsx + Sidebar.tsx updated)
+- All modals have submitting state + disabled buttons (TaskModal, RiskModal, ProjectModal, EscalateModal, RespondEscalationModal, CreateMeetingModal all use isSubmitting/saving)
+- Date validation in TaskModal and ProjectModal (endDate >= startDate via Zod refine)
+- Table horizontal scroll on mobile (overflow-x-auto + min-w-[640px] in TasksTab)
+- Fragment key fix in TasksTab (already correct — Fragment with key={task.id})
+- Empty states added to Escalations (EscalationsSection already had one), WorkloadView (new top-level empty state)
+- Badge and Button base classes normalized (Badge uses inline-flex items-center rounded-full; Button has disabled:opacity-50 disabled:cursor-not-allowed)
+- Router.refresh() consistency — MeetingsClient.handleCreated now calls router.refresh()
+- ProjectCard shows "No tasks yet" when tasks.length is 0
+- ReportTab Copy button shows "Copied!" for 2 seconds after click
+- TeamTab remove member now has confirm() dialog
+- DevDashboardClient review queue shows empty state message when no items

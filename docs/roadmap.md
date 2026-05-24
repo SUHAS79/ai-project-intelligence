@@ -131,6 +131,19 @@
 - [x] /meetings page — accessible to all authenticated roles
 - [x] "Meetings" added to both manager and developer sidebars (Video icon)
 
+### Polish Pass v1 ✅ (2026-05-25)
+- [x] Mobile sidebar: hamburger toggle + backdrop overlay on < lg screens
+- [x] Task table horizontal scroll (overflow-x-auto) on mobile
+- [x] Date validation in TaskModal and ProjectModal (endDate >= startDate)
+- [x] ProjectCard "No tasks yet" state when tasks.length === 0
+- [x] WorkloadView empty state for 0 developers
+- [x] ReportTab Copy button shows "Copied!" for 2 seconds
+- [x] TeamTab member remove now has confirm() dialog
+- [x] DevDashboardClient review queue shows empty state
+- [x] MeetingsClient handleCreated calls router.refresh()
+- [x] Modal.tsx mx-4 for mobile overflow safety
+- [x] All modal submitting states verified (TaskModal, RiskModal, ProjectModal, EscalateModal, RespondEscalationModal, CreateMeetingModal)
+
 ---
 
 ## Next Priorities (Phase 3)

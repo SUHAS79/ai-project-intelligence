@@ -180,11 +180,21 @@ export function DevDashboardClient({
             <ClipboardCheck className="w-4 h-4 text-purple-600" />
             <h2 className="text-sm font-semibold text-slate-800">Review Queue</h2>
             {reviewQueue.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center">
-                {reviewQueue.length}
-              </span>
+              <>
+                <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center">
+                  {reviewQueue.length}
+                </span>
+                <span className="text-xs text-purple-600 font-medium ml-1">
+                  {reviewQueue.length} task{reviewQueue.length !== 1 ? "s" : ""} waiting for review
+                </span>
+              </>
             )}
           </div>
+          {reviewQueue.length === 0 && (
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm px-5 py-4 text-center text-sm text-slate-400">
+              No tasks pending review. When developers submit work, it will appear here.
+            </div>
+          )}
           <ReviewQueueSection initialTasks={reviewQueue} />
         </section>
       )}

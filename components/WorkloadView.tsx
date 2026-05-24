@@ -101,6 +101,18 @@ export function WorkloadView({ developers, unassignedTasks }: WorkloadViewProps)
     (s, d) => s + d.tasks.filter((t) => t.status !== "DONE").reduce((ss, t) => ss + (t.estimatedHours ?? 0), 0), 0
   );
 
+  if (developers.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-16 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+          <Users className="w-6 h-6 text-slate-400" />
+        </div>
+        <p className="font-medium text-slate-700 mb-1">No developers yet</p>
+        <p className="text-sm text-slate-400">Add team members from the People page to see workload here.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary strip */}
@@ -267,7 +279,7 @@ export function WorkloadView({ developers, unassignedTasks }: WorkloadViewProps)
                 {isExpanded && (
                   <div className="border-t border-slate-100 divide-y divide-slate-50">
                     {activeTasks.length === 0 ? (
-                      <p className="text-sm text-slate-400 px-5 py-3 italic">No active tasks.</p>
+                      <p className="text-sm text-slate-400 px-5 py-3 italic">No tasks assigned.</p>
                     ) : (
                       activeTasks
                         .sort((a, b) => {

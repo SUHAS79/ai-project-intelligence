@@ -191,11 +191,24 @@
 - [x] "Meetings" added to MANAGER_NAV and DEV_NAV in Sidebar
 - [x] TypeScript: 0 errors, build: passes
 
-## 🔜 Phase 3 — Polish (Deferred)
+## ✅ Polish Pass v1 (Completed 2026-05-25)
+- [x] Mobile sidebar: hamburger toggle + backdrop overlay on < lg screens (AppShellClient.tsx)
+- [x] Task table horizontal scroll on mobile (overflow-x-auto + min-w in TasksTab)
+- [x] Date validation in TaskModal and ProjectModal (Zod .refine() endDate >= startDate)
+- [x] ProjectCard "No tasks yet" empty state when tasks.length === 0
+- [x] WorkloadView top-level empty state when developers.length === 0
+- [x] WorkloadView expanded card: "No tasks assigned" instead of "No active tasks"
+- [x] ReportTab copy button: "Copied!" feedback for 2 seconds
+- [x] TeamTab member remove: confirm() dialog added
+- [x] DevDashboardClient review queue: empty state message + task count text
+- [x] MeetingsClient handleCreated: router.refresh() for data consistency
+- [x] Modal.tsx: mx-4 for mobile overflow safety
+- [x] All modals verified: submitting state + disabled buttons correct
+
+## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)
 - [ ] Keyboard shortcut: `N` to open new task, `R` for new risk
-- [ ] Mobile responsive layout (sidebar → bottom nav on small screens)
 - [ ] Task search + filter by owner/priority
 - [ ] GIF / screenshot for README hero image
 

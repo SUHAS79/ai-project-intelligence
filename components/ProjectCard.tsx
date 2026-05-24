@@ -80,19 +80,25 @@ export function ProjectCard({ project }: ProjectCardProps) {
           </div>
 
           {/* Task stats */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            {[
-              { label: "Done", value: stats.done, color: "text-emerald-600" },
-              { label: "Active", value: stats.inProgress, color: "text-blue-600" },
-              { label: "Blocked", value: stats.blocked, color: stats.blocked > 0 ? "text-red-500" : "text-slate-400" },
-              { label: "Overdue", value: stats.overdue, color: stats.overdue > 0 ? "text-orange-500" : "text-slate-400" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className={`text-base font-bold tabular-nums ${s.color}`}>{s.value}</div>
-                <div className="text-[10px] text-slate-400 uppercase tracking-wide">{s.label}</div>
-              </div>
-            ))}
-          </div>
+          {stats.total === 0 ? (
+            <div className="mb-4 py-2 text-center">
+              <p className="text-xs text-slate-400 italic">No tasks yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {[
+                { label: "Done", value: stats.done, color: "text-emerald-600" },
+                { label: "Active", value: stats.inProgress, color: "text-blue-600" },
+                { label: "Blocked", value: stats.blocked, color: stats.blocked > 0 ? "text-red-500" : "text-slate-400" },
+                { label: "Overdue", value: stats.overdue, color: stats.overdue > 0 ? "text-orange-500" : "text-slate-400" },
+              ].map((s) => (
+                <div key={s.label} className="text-center">
+                  <div className={`text-base font-bold tabular-nums ${s.color}`}>{s.value}</div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wide">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-slate-100">

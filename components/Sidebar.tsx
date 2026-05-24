@@ -38,9 +38,11 @@ const DEV_NAV = [
 
 interface SidebarProps {
   user: TokenPayload | null;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar({ user, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -66,14 +68,19 @@ export default function Sidebar({ user }: SidebarProps) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-[232px] bg-slate-950 flex flex-col z-40 border-r border-white/5">
+    <aside className={cn(
+      "fixed left-0 top-0 h-full w-[232px] bg-slate-950 flex flex-col z-40 border-r border-white/5 transition-transform duration-200",
+      // On mobile: slide in/out; on desktop: always visible
+      "lg:translate-x-0",
+      isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+    )}>
       {/* Logo */}
       <div className="px-5 pt-6 pb-5 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
             <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
-          <div>
+          <div className="flex-1">
             <div className="text-[15px] font-bold text-white tracking-tight leading-none">
               NAMO
             </div>
@@ -81,6 +88,18 @@ export default function Sidebar({ user }: SidebarProps) {
               Predict before they slip
             </div>
           </div>
+          {/* Mobile close button */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/10 transition-colors"
+              aria-label="Close navigation"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

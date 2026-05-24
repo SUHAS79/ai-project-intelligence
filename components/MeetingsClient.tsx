@@ -108,6 +108,7 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
   function handleCreated(meeting: Meeting) {
     setMeetings((prev) => [meeting, ...prev]);
     toast.success(`Meeting "${meeting.title}" created`);
+    router.refresh();
   }
 
   const canDelete = (m: Meeting) =>

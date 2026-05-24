@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { Task, Project } from "@/app/generated/prisma/client";
 import type { ProjectInsights } from "@/lib/insights";
@@ -264,7 +264,8 @@ export function TasksTab({
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-slate-100">
                 <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Task</th>
@@ -295,9 +296,8 @@ export function TasksTab({
                 const showActivity = expandedActivity === task.id;
 
                 return (
-                  <>
+                  <Fragment key={task.id}>
                     <tr
-                      key={task.id}
                       className={cn(
                         "hover:bg-slate-50/60 transition-colors group",
                         isInReview && "bg-purple-50/30",
@@ -525,11 +525,12 @@ export function TasksTab({
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

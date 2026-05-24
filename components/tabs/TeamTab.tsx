@@ -72,6 +72,7 @@ export function TeamTab({
   }
 
   async function handleRemove(member: Member) {
+    if (!confirm(`Remove ${member.user.fullName} from this project?`)) return;
     setRemoving(member.userId);
     try {
       const res = await fetch(`/api/projects/${projectId}/members`, {
