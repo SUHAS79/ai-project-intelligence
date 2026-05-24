@@ -12,6 +12,7 @@ import {
   ChevronRight,
   CalendarDays,
   BarChart3,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type TokenPayload } from "@/lib/roles";
@@ -24,12 +25,14 @@ const MANAGER_NAV = [
   { href: "/people",       label: "People",    icon: UserCog },
   { href: "/workload",     label: "Workload",  icon: BarChart3 },
   { href: "/availability", label: "Calendar",  icon: CalendarDays },
+  { href: "/meetings",     label: "Meetings",  icon: Video },
   { href: "/profile",      label: "Profile",   icon: User },
 ];
 
 const DEV_NAV = [
   { href: "/dev",          label: "My Dashboard", icon: LayoutDashboard },
   { href: "/availability", label: "Calendar",     icon: CalendarDays },
+  { href: "/meetings",     label: "Meetings",     icon: Video },
   { href: "/profile",      label: "Profile",      icon: User },
 ];
 

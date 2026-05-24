@@ -172,6 +172,25 @@
 - [x] "Workload" added to MANAGER_NAV in Sidebar (BarChart3 icon)
 - [x] TypeScript: 0 errors, build: passes
 
+## ✅ Feature 9 — In-app Meetings via Jitsi (Completed)
+- [x] Meeting model: title, projectId (optional), roomName (unique), scheduledAt, createdById, status
+- [x] Prisma migration: add_meetings; User.createdMeetings relation; Project.meetings relation
+- [x] roomName format: namo-{slug}-{random6} — maps to meet.jit.si/{roomName}
+- [x] GET /api/meetings — all meetings (team-wide visibility)
+- [x] POST /api/meetings — create with auto-generated unique roomName
+- [x] PATCH /api/meetings/[id] — update status (scheduled → active → ended)
+- [x] DELETE /api/meetings/[id] — creator or manager only
+- [x] MeetingRoom component: loads Jitsi iFrame API from meet.jit.si dynamically (useEffect), full-screen overlay
+- [x] Jitsi config: prejoin disabled, watermark hidden, custom toolbar buttons, user displayName from session
+- [x] MeetingsClient: meeting list with Live Now / Scheduled / Past sections
+- [x] Instant Meeting CTA button — creates and launches a meeting in one click
+- [x] CreateMeetingModal: title, optional project link, optional scheduled datetime
+- [x] Meeting cards: Join/Rejoin button, Copy link, Open in new tab, Delete
+- [x] Status badges: Scheduled / Live (animated red dot) / Ended
+- [x] /meetings page — accessible to all roles (manager + developer)
+- [x] "Meetings" added to MANAGER_NAV and DEV_NAV in Sidebar
+- [x] TypeScript: 0 errors, build: passes
+
 ## 🔜 Phase 3 — Polish (Deferred)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

@@ -117,6 +117,20 @@
 - [x] Unassigned tasks panel — active tasks with no assigned developer
 - [x] "Workload" added to manager sidebar
 
+### Feature 9 — In-app Meetings via Jitsi ✅ (2026-05-25)
+- [x] Meeting model: title, projectId (optional), roomName (unique), scheduledAt, createdById, status
+- [x] Prisma migration + relations (MeetingCreator on User, meetings on Project)
+- [x] roomName auto-generated: `namo-{slug}-{random6}` → maps to `meet.jit.si/{roomName}`
+- [x] GET /api/meetings — all meetings, team-wide visibility
+- [x] POST /api/meetings — create with auto-generated roomName
+- [x] PATCH /api/meetings/[id] — update status (scheduled → active → ended)
+- [x] DELETE /api/meetings/[id] — creator or manager only
+- [x] MeetingRoom component: loads Jitsi iFrame API dynamically; full-screen overlay; prejoin disabled
+- [x] MeetingsClient: Live Now / Scheduled / Past sections; Instant Meeting CTA; Join, Copy link, Open in tab, Delete
+- [x] CreateMeetingModal: title, optional project link, optional scheduled datetime
+- [x] /meetings page — accessible to all authenticated roles
+- [x] "Meetings" added to both manager and developer sidebars (Video icon)
+
 ---
 
 ## Next Priorities (Phase 3)

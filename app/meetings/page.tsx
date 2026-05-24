@@ -1,0 +1,52 @@
+import AppShell from "@/components/AppShell";
+import { getUserFromToken } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { MeetingsClient } from "@/components/MeetingsClient";
+import { Video } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+
+export default async function MeetingsPage() {
+  const user = await getUserFromToken();
+  if (!user) return null;
+
+  const meetings = await prisma.meeting.findMany({
+    include: {
+      project: { select: { id: true, name: true } },
+      createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
+    },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
+
+  // Projects for the "link to project" dropdown in CreateMeetingModal
+  const projects = await prisma.project.findMany({
+    where: { status: "ACTIVE" },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
+  return (
+    <AppShell>
+      <div className="p-8 max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
+            <Video className="w-5 h-5 text-violet-500" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Meetings</h1>
+            <p className="text-sm text-slate-500">
+              Start or schedule video meetings powered by Jitsi Meet — no account required.
+            </p>
+          </div>
+        </div>
+
+        <MeetingsClient
+          user={user}
+          initialMeetings={meetings as any}
+          projects={projects}
+        />
+      </div>
+    </AppShell>
+  );
+}

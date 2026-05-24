@@ -65,8 +65,11 @@ app/
     reports/portfolio/    GET → cross-project portfolio report (manager only, ?period=daily|weekly|monthly)
     availability/         GET (?month=YYYY-MM, role-scoped) | POST (create entry)
     availability/[id]/    PATCH (approve/reject, manager) | DELETE (creator or manager)
+    meetings/             GET (all, team-wide) | POST (create, auto-generates roomName)
+    meetings/[id]/        PATCH (update status) | DELETE (creator or manager)
 
   /workload               Manager-only: team capacity view (proxy.ts isManagerOnlyPath)
+  /meetings               Meeting list + Jitsi join — all authenticated roles
     seed/                 POST → re-seeds demo data
 
 components/
@@ -82,6 +85,9 @@ components/
   RespondEscalationModal.tsx  Manager/senior dev responds or resolves an escalation
   EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards)
   PortfolioReportModal.tsx  Manager-only cross-project report modal (period toggle, health table, copy)
+  MeetingsClient.tsx      Meeting list with Live Now/Scheduled/Past sections + Instant Meeting CTA
+  CreateMeetingModal.tsx  Create meeting form (title, optional project, optional scheduled time)
+  MeetingRoom.tsx         Full-screen Jitsi iFrame overlay; loads external_api.js dynamically
   HealthScore.tsx         Visual health score gauge component
   tabs/
     TasksTab.tsx          Task table with inline status select, filter pills
