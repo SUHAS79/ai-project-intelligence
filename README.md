@@ -6,6 +6,20 @@ A full-stack AI-powered project management tool that continuously analyzes your 
 
 ---
 
+## Demo Login
+
+| Role | Email | Password |
+|------|-------|----------|
+| Manager | sarah@namo.dev | manager123 |
+| Senior Developer | alex@namo.dev | senior123 |
+| Developer | emma@namo.dev | dev123 |
+
+- **Manager** → lands on `/` (project dashboard), can manage team, projects, and view all health data
+- **Senior Developer / Developer** → lands on `/dev` (developer dashboard, Feature 2 coming soon)
+- Inactive accounts cannot log in (manager can deactivate from Team page)
+
+---
+
 ## Features
 
 ### 🧠 AI Insights
@@ -35,6 +49,7 @@ A full-stack AI-powered project management tool that continuously analyzes your 
 |-------|------|
 | Framework | Next.js 16 (App Router, TypeScript) |
 | Database | SQLite + Prisma v7 |
+| Auth | JWT via jose + bcryptjs (role-based sessions) |
 | UI | Tailwind CSS v4 |
 | Charts | Recharts |
 | Forms | React Hook Form + Zod v4 |
@@ -60,7 +75,7 @@ npx prisma generate
 # Create DB and run migrations
 npx prisma migrate dev --name init
 
-# Seed with demo data (3 projects, 24 tasks, 6 risks)
+# Seed with demo data (3 users, 3 projects, 24 tasks, 6 risks)
 npm run seed
 
 # Start the dev server
@@ -105,7 +120,7 @@ docs/                   Product, architecture, roadmap, decisions
 
 ## Architecture Notes
 
-- **No auth** — single-user, demo-ready out of the box
+- **Role-based auth** — Manager, Developer, Senior Developer roles with JWT sessions
 - **No API keys** — all AI insights are rule-based heuristics (critical path, bottleneck scoring, health formulas)
 - **SQLite** — swap to PostgreSQL by changing one line in `schema.prisma`
 - See `docs/architecture.md` for full system design

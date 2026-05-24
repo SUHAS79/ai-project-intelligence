@@ -19,14 +19,38 @@ This is a full-stack AI-powered project management app built with Next.js, SQLit
 | Tailwind version | **v4** — uses `@import "tailwindcss"` syntax in globals.css |
 | React version | **19** — `gantt-task-react` conflicts, use `--legacy-peer-deps` for npm installs |
 
+## Auth System (Feature 1)
+
+- **JWT sessions** via `jose` — 7-day cookie (`namo-session`), HttpOnly, SameSite=Lax
+- **Passwords** hashed with `bcryptjs` (salt rounds: 12)
+- **Roles**: `manager`, `developer`, `senior_developer`
+- **Middleware** (`middleware.ts`): route protection + role-based redirects
+  - Manager → `/` (project dashboard); tries `/dev` → redirected to `/`
+  - Developer/Senior Dev → `/dev`; tries `/` or `/projects` → redirected to `/dev`
+  - Unauthenticated → `/login`
+- **Auth lib split**: `lib/roles.ts` (client-safe types & constants) + `lib/auth.ts` (server-only, uses next/headers)
+- **Demo accounts** (created by `npm run seed`):
+  - Manager: sarah@namo.dev / manager123
+  - Senior Dev: alex@namo.dev / senior123
+  - Developer: emma@namo.dev / dev123
+
 ## Architecture
 
 ```
 app/
-  layout.tsx              Root layout with AppShell + Sidebar
-  page.tsx                Dashboard (server component, fetches all projects)
+  layout.tsx              Root layout (no AppShell here — each page wraps itself)
+  login/page.tsx          Standalone login page (no sidebar)
+  page.tsx                Manager dashboard (server, force-dynamic)
+  dev/page.tsx            Developer dashboard placeholder (Feature 2)
+  team/page.tsx           Manager-only team management
+  profile/page.tsx        Profile + password change (all roles)
   projects/[id]/page.tsx  Project hub (server, awaits params, fetches project+insights)
   api/
+    auth/login/           POST → issues JWT cookie
+    auth/logout/          POST → clears JWT cookie
+    auth/me/              GET → current user | PATCH → change password
+    users/                GET list | POST create (manager only)
+    users/[id]/           PATCH → update role/status (manager only)
     projects/             GET/POST list, GET/PUT/DELETE by id
     projects/[id]/tasks/  GET/POST
     projects/[id]/risks/  GET/POST
@@ -144,7 +168,7 @@ return new PrismaClient({ adapter } as any);
 - All imports use `@/` alias (maps to project root)
 
 ## Known Limitations (MVP)
-- No authentication — single user, no login
+- JWT deactivation lag: if a user is deactivated while logged in, their existing token remains valid until expiry (7 days). Acceptable for MVP.
 - SQLite only (swap `provider` in schema.prisma + adapter for PostgreSQL)
 - AI insights are rule-based heuristics, not LLM (upgrade path: replace `lib/insights.ts` functions)
 - No real-time updates (refresh after mutations via `router.refresh()`)

@@ -34,6 +34,20 @@
 
 ---
 
+### Feature 1 — Role-Based Auth System ✅ (2026-05-24)
+- [x] User model with role, status, initials, lastLogin
+- [x] Prisma migration + seed (3 demo users)
+- [x] JWT auth via jose + bcryptjs password hashing
+- [x] Single login page with NAMO branding and demo quick-fill
+- [x] Middleware: role-based route protection (manager/dev/senior_dev)
+- [x] Manager dashboard: Team management (create, edit role/status, deactivate)
+- [x] Developer dashboard placeholder (/dev)
+- [x] Profile page for all roles (view info + change password)
+- [x] Sidebar: role-aware nav + user card + logout
+- [x] lib/roles.ts (client-safe) + lib/auth.ts (server-only) module split
+
+---
+
 ## Next Priorities (Phase 3)
 
 ### P0 — Polish
@@ -51,8 +65,8 @@
 - [ ] Risk probability/impact matrix visualization (2×2 grid)
 
 ### P2 — Upgrade Path
-- [ ] NextAuth.js authentication (GitHub or Google provider)
-- [ ] Multi-user: assign tasks to team members (user accounts)
+- [x] Role-based auth (Feature 1 — completed)
+- [ ] Multi-user: assign tasks to team members (link Task.owner to User.id)
 - [ ] PostgreSQL support (schema already portable, just swap adapter)
 - [ ] LLM insights: replace heuristics with Claude API for natural language summaries
 - [ ] Vercel deployment pipeline with environment variables

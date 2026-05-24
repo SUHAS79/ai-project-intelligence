@@ -1,10 +1,18 @@
 import { PrismaClient } from "../app/generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import path from "path";
+import bcrypt from "bcryptjs";
 
 const dbPath = path.resolve(__dirname, "../dev.db");
 const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
 const prisma = new PrismaClient({ adapter } as any);
+
+function computeInitials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) return "??";
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 async function main() {
   console.log("🌱 Seeding database...");
@@ -14,6 +22,45 @@ async function main() {
   await prisma.task.deleteMany();
   await prisma.risk.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.user.deleteMany();
+
+  // ─── Demo Users ──────────────────────────────────────────────────────────────
+  const demoUsers = [
+    {
+      fullName: "Sarah Mitchell",
+      email: "sarah@namo.dev",
+      password: "manager123",
+      role: "manager",
+      status: "active",
+    },
+    {
+      fullName: "Alex Rivera",
+      email: "alex@namo.dev",
+      password: "senior123",
+      role: "senior_developer",
+      status: "active",
+    },
+    {
+      fullName: "Emma Wilson",
+      email: "emma@namo.dev",
+      password: "dev123",
+      role: "developer",
+      status: "active",
+    },
+  ];
+
+  for (const u of demoUsers) {
+    await prisma.user.create({
+      data: {
+        fullName: u.fullName,
+        email: u.email,
+        password: await bcrypt.hash(u.password, 12),
+        role: u.role,
+        status: u.status,
+        initials: computeInitials(u.fullName),
+      },
+    });
+  }
 
   // Dates relative to today for realistic demo
   const today = new Date();
@@ -486,10 +533,16 @@ async function main() {
   });
 
   console.log("✅ Seed complete!");
+  console.log(`   • Users: 3`);
   console.log(`   • Projects: 3`);
   console.log(`   • Tasks: 24`);
   console.log(`   • Dependencies: 23`);
   console.log(`   • Risks: 6`);
+  console.log("");
+  console.log("🔑 Demo login credentials:");
+  console.log("   Manager      → sarah@namo.dev  / manager123");
+  console.log("   Senior Dev   → alex@namo.dev   / senior123");
+  console.log("   Developer    → emma@namo.dev   / dev123");
 }
 
 main()
