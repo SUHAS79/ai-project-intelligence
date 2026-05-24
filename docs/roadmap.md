@@ -107,6 +107,16 @@
 - [x] Calendar: click a day for side panel with all entries and approval actions
 - [x] "Calendar" link added to both manager and developer sidebars
 
+### Feature 8 — Manager Workload View ✅ (2026-05-25)
+- [x] /workload page (manager-only) — per-developer workload cards with expand/collapse
+- [x] Workload scoring: overloaded | heavy | balanced | light | idle
+- [x] Summary strip: team count, active tasks, overloaded dev count, total est. hours
+- [x] Filter pills by workload level; stacked progress bar per developer
+- [x] Expanded task list: status, priority, est. hours, due date, project link
+- [x] "Off today" badge integrated with Availability data
+- [x] Unassigned tasks panel — active tasks with no assigned developer
+- [x] "Workload" added to manager sidebar
+
 ---
 
 ## Next Priorities (Phase 3)

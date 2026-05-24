@@ -157,6 +157,21 @@
 - [x] "Calendar" added to MANAGER_NAV and DEV_NAV in Sidebar
 - [x] TypeScript: 0 errors, build: passes
 
+## ✅ Feature 8 — Manager Workload View (Completed)
+- [x] /workload page — manager-only, force-dynamic server page
+- [x] proxy.ts updated: /workload added to isManagerOnlyPath
+- [x] WorkloadView client component: per-developer cards, expandable task list
+- [x] Workload scoring: overloaded | heavy | balanced | light | idle (based on IN_PROGRESS count, overdue, est. hours)
+- [x] Summary strip: team members, active tasks, overloaded count, estimated hours remaining
+- [x] Overloaded alert banner with redistribution suggestion
+- [x] Filter pills: filter by workload level (All / Overloaded / Heavy / Balanced / Light / Idle)
+- [x] Developer card: stacked progress bar, status breakdown, overdue count, est. hours, expand/collapse
+- [x] Expanded view: task list sorted by urgency (blocked first) with status, priority, est. hours, due date, project link
+- [x] "Off today" badge using Availability data (approved vacation/sick/holiday)
+- [x] Unassigned tasks panel: active tasks with no owner, link to their project
+- [x] "Workload" added to MANAGER_NAV in Sidebar (BarChart3 icon)
+- [x] TypeScript: 0 errors, build: passes
+
 ## 🔜 Phase 3 — Polish (Deferred)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

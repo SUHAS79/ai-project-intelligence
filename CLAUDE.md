@@ -65,6 +65,8 @@ app/
     reports/portfolio/    GET → cross-project portfolio report (manager only, ?period=daily|weekly|monthly)
     availability/         GET (?month=YYYY-MM, role-scoped) | POST (create entry)
     availability/[id]/    PATCH (approve/reject, manager) | DELETE (creator or manager)
+
+  /workload               Manager-only: team capacity view (proxy.ts isManagerOnlyPath)
     seed/                 POST → re-seeds demo data
 
 components/

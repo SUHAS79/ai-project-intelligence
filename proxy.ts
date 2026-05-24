@@ -22,6 +22,7 @@ function isManagerOnlyPath(pathname: string): boolean {
     pathname === "/" ||
     pathname.startsWith("/projects") ||
     pathname.startsWith("/people") ||
+    pathname.startsWith("/workload") ||
     pathname.startsWith("/api/users")
   );
 }
