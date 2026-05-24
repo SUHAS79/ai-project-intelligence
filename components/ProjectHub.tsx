@@ -13,6 +13,7 @@ import { RisksTab } from "./tabs/RisksTab";
 import { InsightsTab } from "./tabs/InsightsTab";
 import { ReportTab } from "./tabs/ReportTab";
 import { ForecastTab } from "./tabs/ForecastTab";
+import { TeamTab } from "./tabs/TeamTab";
 import { ProjectModal } from "./ProjectModal";
 import {
   PROJECT_STATUS_CONFIG,
@@ -31,8 +32,31 @@ import {
   Calendar,
   Pencil,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
+
+type ProjectMember = {
+  id: string;
+  userId: string;
+  addedAt: string;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: string;
+    status: string;
+    initials: string;
+  };
+};
+
+type OrgUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  initials: string;
+};
 
 type ProjectWithData = Project & {
   tasks: (Task & { dependsOn: any[]; dependedOnBy: any[] })[];
@@ -43,18 +67,22 @@ interface ProjectHubProps {
   project: ProjectWithData;
   insights: ProjectInsights;
   activeTab: string;
+  members: ProjectMember[];
+  allUsers: OrgUser[];
+  isManager: boolean;
 }
 
 const TABS = [
-  { id: "tasks",    label: "Tasks",     icon: CheckSquare },
-  { id: "forecast", label: "Forecast",  icon: TrendingUp },
-  { id: "gantt",    label: "Timeline",  icon: GanttChart },
-  { id: "risks",    label: "Risks",     icon: AlertTriangle },
+  { id: "tasks",    label: "Tasks",      icon: CheckSquare },
+  { id: "forecast", label: "Forecast",   icon: TrendingUp },
+  { id: "gantt",    label: "Timeline",   icon: GanttChart },
+  { id: "risks",    label: "Risks",      icon: AlertTriangle },
+  { id: "team",     label: "Team",       icon: Users },
   { id: "insights", label: "AI Insights", icon: Brain },
-  { id: "report",   label: "Report",    icon: FileText },
+  { id: "report",   label: "Report",     icon: FileText },
 ];
 
-export function ProjectHub({ project, insights, activeTab }: ProjectHubProps) {
+export function ProjectHub({ project, insights, activeTab, members, allUsers, isManager }: ProjectHubProps) {
   const router = useRouter();
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentTab, setCurrentTab] = useState(activeTab);
@@ -168,6 +196,20 @@ export function ProjectHub({ project, insights, activeTab }: ProjectHubProps) {
         {currentTab === "forecast" && <ForecastTab project={project} tasks={project.tasks} />}
         {currentTab === "gantt"    && <GanttTab    tasks={project.tasks} />}
         {currentTab === "risks"    && <RisksTab    projectId={project.id} risks={project.risks} insights={insights} />}
+        {currentTab === "team"     && (
+          <TeamTab
+            projectId={project.id}
+            initialMembers={members}
+            tasks={project.tasks.map((t) => ({
+              id: t.id,
+              title: t.title,
+              status: t.status,
+              owner: (t as any).owner ?? null,
+            }))}
+            allUsers={allUsers}
+            isManager={isManager}
+          />
+        )}
         {currentTab === "insights" && <InsightsTab insights={insights} tasks={project.tasks} />}
         {currentTab === "report"   && <ReportTab   projectId={project.id} />}
       </div>

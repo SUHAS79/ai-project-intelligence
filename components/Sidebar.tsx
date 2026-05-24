@@ -6,24 +6,26 @@ import {
   LayoutDashboard,
   FolderOpen,
   Zap,
-  Users,
+  UserCog,
   User,
   LogOut,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROLE_LABELS, ROLE_COLORS, type TokenPayload } from "@/lib/roles";
+import { ROLE_LABELS, type TokenPayload } from "@/lib/roles";
 import { useState } from "react";
 
 // Nav items per role
 const MANAGER_NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/team", label: "Team", icon: Users },
+  { href: "/",        label: "Dashboard", icon: LayoutDashboard },
+  { href: "/projects", label: "Projects",  icon: FolderOpen },
+  { href: "/people",  label: "People",    icon: UserCog },
+  { href: "/profile", label: "Profile",   icon: User },
 ];
 
 const DEV_NAV = [
-  { href: "/dev", label: "My Dashboard", icon: LayoutDashboard },
+  { href: "/dev",     label: "My Dashboard", icon: LayoutDashboard },
+  { href: "/profile", label: "Profile",      icon: User },
 ];
 
 interface SidebarProps {
@@ -48,7 +50,12 @@ export default function Sidebar({ user }: SidebarProps) {
   }
 
   const roleLabel = user ? (ROLE_LABELS[user.role] ?? user.role) : "";
-  const roleBadge = user ? (ROLE_COLORS[user.role] ?? "") : "";
+
+  function isActive(href: string): boolean {
+    if (href === "/") return pathname === "/";
+    if (href === "/dev") return pathname === "/dev";
+    return pathname.startsWith(href);
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[232px] bg-slate-950 flex flex-col z-40 border-r border-white/5">
@@ -72,23 +79,18 @@ export default function Sidebar({ user }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         <p className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-2 mb-2">
-          Workspace
+          {user?.role === "manager" ? "Workspace" : "Menu"}
         </p>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : item.href === "/dev"
-              ? pathname === "/dev"
-              : pathname.startsWith(item.href);
+          const active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
                 "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
-                isActive
+                active
                   ? "bg-white/10 text-white"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
               )}
@@ -98,28 +100,9 @@ export default function Sidebar({ user }: SidebarProps) {
             </Link>
           );
         })}
-
-        {/* Divider + Settings section */}
-        <div className="pt-3 mt-3 border-t border-white/[0.06]">
-          <p className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-2 mb-2">
-            Account
-          </p>
-          <Link
-            href="/profile"
-            className={cn(
-              "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
-              pathname === "/profile"
-                ? "bg-white/10 text-white"
-                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-            )}
-          >
-            <User className="w-4 h-4 shrink-0" />
-            Profile
-          </Link>
-        </div>
       </nav>
 
-      {/* User info + Logout */}
+      {/* User card + Logout */}
       <div className="px-3 pb-4 border-t border-white/[0.06] pt-3">
         {user ? (
           <>
@@ -128,7 +111,6 @@ export default function Sidebar({ user }: SidebarProps) {
               href="/profile"
               className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors group mb-1"
             >
-              {/* Avatar */}
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0">
                 <span className="text-[10px] font-bold text-white">
                   {user.initials}
@@ -145,7 +127,7 @@ export default function Sidebar({ user }: SidebarProps) {
               <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-slate-400 shrink-0 transition-colors" />
             </Link>
 
-            {/* Logout button */}
+            {/* Logout */}
             <button
               onClick={handleLogout}
               disabled={loggingOut}
@@ -156,7 +138,6 @@ export default function Sidebar({ user }: SidebarProps) {
             </button>
           </>
         ) : (
-          /* AI Status footer when no user info */
           <div className="flex items-center gap-2 px-2">
             <div className="relative w-1.5 h-1.5">
               <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-60" />

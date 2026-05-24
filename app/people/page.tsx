@@ -1,11 +1,10 @@
 import AppShell from "@/components/AppShell";
-import { TeamManagement } from "@/components/TeamManagement";
+import { PeopleManagement } from "@/components/PeopleManagement";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function TeamPage() {
-  // Fetch all non-manager users for the team list
+export default async function PeoplePage() {
   const employees = await prisma.user.findMany({
     where: { role: { not: "manager" } },
     select: {
@@ -21,7 +20,6 @@ export default async function TeamPage() {
     orderBy: { fullName: "asc" },
   });
 
-  // Serialize dates for client component
   const serialized = employees.map((e) => ({
     ...e,
     createdAt: e.createdAt.toISOString(),
@@ -30,7 +28,7 @@ export default async function TeamPage() {
 
   return (
     <AppShell>
-      <TeamManagement initialEmployees={serialized} />
+      <PeopleManagement initialEmployees={serialized} />
     </AppShell>
   );
 }

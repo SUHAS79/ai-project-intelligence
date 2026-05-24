@@ -11,28 +11,42 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  fullName  String
-  email     String    @unique
-  password  String
-  role      String    @default("developer") // manager | developer | senior_developer
-  status    String    @default("active")    // active | inactive
-  initials  String
-  createdAt DateTime  @default(now())
-  lastLogin DateTime?
+  id                 String          @id @default(cuid())
+  fullName           String
+  email              String          @unique
+  password           String
+  role               String          @default("developer") // manager | developer | senior_developer
+  status             String          @default("active")    // active | inactive
+  initials           String
+  createdAt          DateTime        @default(now())
+  lastLogin          DateTime?
+  projectMemberships ProjectMember[]
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  addedAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
 }
 
 model Project {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
-  status      String   @default("ACTIVE")
+  status      String          @default("ACTIVE")
   startDate   DateTime
   endDate     DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   tasks       Task[]
   risks       Risk[]
+  members     ProjectMember[]
 }
 
 model Task {
