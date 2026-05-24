@@ -11,6 +11,8 @@ const CreateTaskSchema = z.object({
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).default("MEDIUM"),
   owner: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
+  estimatedHours: z.number().min(0).optional().nullable(),
+  actualHours: z.number().min(0).optional().nullable(),
   startDate: z.string().transform((s) => new Date(s)),
   endDate: z.string().transform((s) => new Date(s)),
   dependencyIds: z.array(z.string()).optional().default([]),

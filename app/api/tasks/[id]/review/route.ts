@@ -7,6 +7,7 @@ import { TASK_INCLUDE } from "../route";
 // POST /api/tasks/[id]/review — developer submits task for review
 const SubmitSchema = z.object({
   workSummary: z.string().min(1, "Work summary is required"),
+  actualHours: z.number().min(0).optional().nullable(),
 });
 
 // PATCH /api/tasks/[id]/review — senior dev / manager approves or rejects (or manager reopens)
@@ -26,7 +27,7 @@ export async function POST(
 
     const { id } = await params;
     const body = await request.json();
-    const { workSummary } = SubmitSchema.parse(body);
+    const { workSummary, actualHours } = SubmitSchema.parse(body);
 
     // Verify task exists and is IN_PROGRESS
     const task = await prisma.task.findUnique({ where: { id } });
@@ -46,6 +47,7 @@ export async function POST(
         status: "IN_REVIEW",
         reviewStatus: "PENDING",
         workSummary,
+        actualHours: actualHours ?? undefined,
         rejectionReason: null,
         reviewedById: null,
         reviewedAt: null,

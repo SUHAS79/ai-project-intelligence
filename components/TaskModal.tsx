@@ -10,13 +10,15 @@ import { Textarea } from "./ui/Textarea";
 import { Button } from "./ui/Button";
 import { Task } from "@/app/generated/prisma/client";
 import { format } from "date-fns";
+import { Timer } from "lucide-react";
 
 const TaskFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE"]),
+  status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   assignedToId: z.string().optional().nullable(),
+  estimatedHours: z.number().min(0).optional().nullable(),
   startDate: z.string().min(1, "Start date required"),
   endDate: z.string().min(1, "End date required"),
   dependencyIds: z.array(z.string()).default([]),
@@ -66,6 +68,7 @@ export function TaskModal({
           status: task.status as any,
           priority: task.priority as any,
           assignedToId: (task as any).assignedToId ?? "",
+          estimatedHours: (task as any).estimatedHours ?? undefined,
           startDate: format(new Date(task.startDate), "yyyy-MM-dd"),
           endDate: format(new Date(task.endDate), "yyyy-MM-dd"),
           dependencyIds: task.dependsOn?.map((d) => d.dependencyId) ?? [],
@@ -86,10 +89,13 @@ export function TaskModal({
   };
 
   const onFormSubmit = async (data: TaskFormData) => {
-    // Convert empty string to null for assignedToId
     const payload = {
       ...data,
       assignedToId: data.assignedToId || null,
+      estimatedHours:
+        data.estimatedHours && !isNaN(data.estimatedHours) && data.estimatedHours > 0
+          ? data.estimatedHours
+          : null,
     };
     await onSubmit(payload as any);
     reset();
@@ -142,6 +148,28 @@ export function TaskModal({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Time estimate */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+            <Timer className="w-3.5 h-3.5 text-amber-500" />
+            Estimated hours
+            <span className="text-xs text-slate-400 font-normal">(optional)</span>
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              placeholder="e.g. 8"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 pr-12 text-sm text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              {...register("estimatedHours", { valueAsNumber: true })}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
+              hours
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

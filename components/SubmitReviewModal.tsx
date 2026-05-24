@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { X, SendHorizonal, FileCheck } from "lucide-react";
+import { X, SendHorizonal, FileCheck, Timer } from "lucide-react";
+import { formatHours } from "@/lib/utils";
 
 interface SubmitReviewModalProps {
   taskTitle: string;
   taskId: string;
+  estimatedHours?: number | null;
   onClose: () => void;
   onSubmitted: () => void;
 }
@@ -13,12 +15,25 @@ interface SubmitReviewModalProps {
 export function SubmitReviewModal({
   taskTitle,
   taskId,
+  estimatedHours,
   onClose,
   onSubmitted,
 }: SubmitReviewModalProps) {
   const [workSummary, setWorkSummary] = useState("");
+  const [actualHoursStr, setActualHoursStr] = useState(
+    estimatedHours ? String(estimatedHours) : ""
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const actualHoursParsed = parseFloat(actualHoursStr);
+  const actualHoursValid = !isNaN(actualHoursParsed) && actualHoursParsed > 0;
+
+  // Variance display
+  const variance =
+    estimatedHours && actualHoursValid
+      ? actualHoursParsed - estimatedHours
+      : null;
 
   async function handleSubmit() {
     if (!workSummary.trim()) {
@@ -31,7 +46,10 @@ export function SubmitReviewModal({
       const res = await fetch(`/api/tasks/${taskId}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workSummary: workSummary.trim() }),
+        body: JSON.stringify({
+          workSummary: workSummary.trim(),
+          actualHours: actualHoursValid ? actualHoursParsed : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -87,12 +105,52 @@ export function SubmitReviewModal({
               value={workSummary}
               onChange={(e) => setWorkSummary(e.target.value)}
               placeholder="What did you build / fix / implement? Include any notes for the reviewer..."
-              rows={4}
+              rows={3}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
             />
-            <p className="text-xs text-slate-400 mt-1">
-              {workSummary.length} characters
-            </p>
+            <p className="text-xs text-slate-400 mt-1">{workSummary.length} characters</p>
+          </div>
+
+          {/* Actual hours */}
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              <span className="flex items-center gap-1">
+                <Timer className="w-3.5 h-3.5 text-amber-500" />
+                Actual time spent
+                {estimatedHours && (
+                  <span className="text-slate-400 font-normal">
+                    (estimated {formatHours(estimatedHours)})
+                  </span>
+                )}
+              </span>
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <input
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  value={actualHoursStr}
+                  onChange={(e) => setActualHoursStr(e.target.value)}
+                  placeholder="e.g. 6"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 pr-12 text-sm text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
+                  hours
+                </span>
+              </div>
+              {variance !== null && (
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-lg border ${
+                    variance > 0
+                      ? "text-red-700 bg-red-50 border-red-200"
+                      : "text-emerald-700 bg-emerald-50 border-emerald-200"
+                  }`}
+                >
+                  {variance > 0 ? `+${formatHours(variance)} over` : `${formatHours(Math.abs(variance))} under`}
+                </span>
+              )}
+            </div>
           </div>
 
           {error && (
@@ -102,11 +160,7 @@ export function SubmitReviewModal({
           )}
 
           <div className="flex items-center justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
               Cancel
             </button>
             <button

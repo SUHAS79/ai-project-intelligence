@@ -16,10 +16,19 @@ import {
   SendHorizonal,
   XCircle,
   ClipboardCheck,
+  Timer,
 } from "lucide-react";
-import { cn, STATUS_CONFIG, PRIORITY_CONFIG, formatDate, daysFromNow } from "@/lib/utils";
+import {
+  cn,
+  STATUS_CONFIG,
+  PRIORITY_CONFIG,
+  formatDate,
+  daysFromNow,
+  formatHours,
+} from "@/lib/utils";
 import type { TokenPayload } from "@/lib/roles";
 import { SubmitReviewModal } from "./SubmitReviewModal";
+import { SetEstimateModal } from "./SetEstimateModal";
 import { ReviewQueueSection } from "./ReviewQueueSection";
 import { toast } from "sonner";
 
@@ -45,6 +54,8 @@ type AssignedTask = {
   workSummary: string | null;
   rejectionReason: string | null;
   assignedToId: string | null;
+  estimatedHours: number | null;
+  actualHours: number | null;
   project: {
     id: string;
     name: string;
@@ -69,6 +80,7 @@ export function DevDashboardClient({
   const router = useRouter();
   const [tasks, setTasks] = useState<AssignedTask[]>(initialTasks);
   const [submitForTask, setSubmitForTask] = useState<AssignedTask | null>(null);
+  const [estimateForTask, setEstimateForTask] = useState<AssignedTask | null>(null);
 
   const isSeniorDev = user.role === "senior_developer";
 
@@ -86,7 +98,7 @@ export function DevDashboardClient({
     (t) => t.status !== "DONE" && t.status !== "IN_REVIEW" && daysFromNow(t.endDate) < 0
   ).length;
 
-  async function handleStatusChange(taskId: string, newStatus: string) {
+  async function handleStatusChange(taskId: string, newStatus: string, task: AssignedTask) {
     const res = await fetch(`/api/tasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -96,14 +108,22 @@ export function DevDashboardClient({
       toast.error("Failed to update status");
       return;
     }
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? { ...t, status: newStatus, reviewStatus: null, rejectionReason: null }
-          : t
-      )
-    );
+    const updated = { ...task, status: newStatus, reviewStatus: null, rejectionReason: null };
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+
+    // If moving to IN_PROGRESS with no estimate yet, prompt for estimate
+    if (newStatus === "IN_PROGRESS" && !task.estimatedHours) {
+      setEstimateForTask(updated);
+    }
     router.refresh();
+  }
+
+  function handleEstimateSaved(taskId: string, hours: number) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, estimatedHours: hours } : t))
+    );
+    setEstimateForTask(null);
+    toast.success(`Estimate set: ${formatHours(hours)}`);
   }
 
   function handleReviewSubmitted() {
@@ -124,7 +144,9 @@ export function DevDashboardClient({
           </h1>
         </div>
         <p className="text-sm text-slate-500 ml-9">
-          {isSeniorDev ? "Your tasks and review queue." : "Here are all the tasks currently assigned to you."}
+          {isSeniorDev
+            ? "Your tasks and review queue."
+            : "Here are all the tasks currently assigned to you."}
         </p>
       </div>
 
@@ -196,6 +218,8 @@ export function DevDashboardClient({
               const isInReview = task.status === "IN_REVIEW";
               const isRejected = task.reviewStatus === "REJECTED";
               const isDone = task.status === "DONE";
+              const needsEstimate =
+                task.status === "IN_PROGRESS" && !task.estimatedHours;
 
               return (
                 <div
@@ -243,12 +267,7 @@ export function DevDashboardClient({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
                         <span className="font-medium text-slate-900 text-sm">{task.title}</span>
-                        <span
-                          className={cn(
-                            "text-[11px] px-1.5 py-0.5 rounded font-medium border",
-                            priorityCfg.color
-                          )}
-                        >
+                        <span className={cn("text-[11px] px-1.5 py-0.5 rounded font-medium border", priorityCfg.color)}>
                           {priorityCfg.label}
                         </span>
                         {isInReview && (
@@ -277,55 +296,78 @@ export function DevDashboardClient({
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-slate-400 mb-1">
-                        <Link
-                          href={`/projects/${task.project.id}`}
-                          className="hover:text-violet-600 transition-colors font-medium flex items-center gap-1"
-                          onClick={(e) => e.preventDefault()} // devs can't access /projects
-                          title={task.project.name}
-                        >
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mb-1 flex-wrap">
+                        <span className="font-medium text-slate-500" title={task.project.name}>
                           {task.project.name}
-                        </Link>
+                        </span>
                         <span className="flex items-center gap-1">
                           <CalendarClock className="w-3 h-3" />
                           Due {formatDate(task.endDate)}
                         </span>
+                        {/* Estimate display */}
+                        {task.estimatedHours && (
+                          <span className="flex items-center gap-1 text-amber-600">
+                            <Timer className="w-3 h-3" />
+                            ~{formatHours(task.estimatedHours)} est.
+                            {task.actualHours && task.actualHours !== task.estimatedHours && (
+                              <span
+                                className={cn(
+                                  "ml-1 font-medium",
+                                  task.actualHours > task.estimatedHours
+                                    ? "text-red-500"
+                                    : "text-emerald-600"
+                                )}
+                              >
+                                ({formatHours(task.actualHours)} actual)
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </div>
 
                       {task.description && (
-                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                          {task.description}
-                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
                       )}
 
                       {/* Rejection reason */}
                       {isRejected && task.rejectionReason && (
                         <div className="mt-2.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                          <p className="text-xs font-semibold text-red-700 mb-0.5">
-                            Rejection feedback:
-                          </p>
+                          <p className="text-xs font-semibold text-red-700 mb-0.5">Rejection feedback:</p>
                           <p className="text-xs text-red-700">{task.rejectionReason}</p>
                         </div>
                       )}
 
-                      {/* Submit for review button (only when IN_PROGRESS and assigned to this user) */}
-                      {task.status === "IN_PROGRESS" && (
-                        <button
-                          onClick={() => setSubmitForTask(task)}
-                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
-                        >
-                          <SendHorizonal className="w-3.5 h-3.5" />
-                          Submit for Review
-                        </button>
-                      )}
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        {/* Set estimate prompt */}
+                        {needsEstimate && (
+                          <button
+                            onClick={() => setEstimateForTask(task)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-lg transition-colors"
+                          >
+                            <Timer className="w-3.5 h-3.5" />
+                            Set Estimate
+                          </button>
+                        )}
+                        {/* Submit for review */}
+                        {task.status === "IN_PROGRESS" && (
+                          <button
+                            onClick={() => setSubmitForTask(task)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                          >
+                            <SendHorizonal className="w-3.5 h-3.5" />
+                            Submit for Review
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Status changer — hidden for IN_REVIEW and DONE */}
-                    {!isInReview && !isDone && (
+                    {/* Status changer */}
+                    {!isInReview && !isDone ? (
                       <div className="shrink-0">
                         <select
                           value={task.status}
-                          onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                          onChange={(e) => handleStatusChange(task.id, e.target.value, task)}
                           className={cn(
                             "text-xs rounded-lg border px-2 py-1 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-200 appearance-none",
                             statusCfg?.color ?? "bg-slate-100 text-slate-700 border-slate-200"
@@ -336,8 +378,7 @@ export function DevDashboardClient({
                           <option value="BLOCKED">Blocked</option>
                         </select>
                       </div>
-                    )}
-                    {(isInReview || isDone) && (
+                    ) : (
                       <span
                         className={cn(
                           "shrink-0 text-xs rounded-lg border px-2 py-1 font-medium",
@@ -374,11 +415,22 @@ export function DevDashboardClient({
         </a>
       </div>
 
+      {/* Set estimate modal */}
+      {estimateForTask && (
+        <SetEstimateModal
+          taskTitle={estimateForTask.title}
+          taskId={estimateForTask.id}
+          onClose={() => setEstimateForTask(null)}
+          onSaved={(hours) => handleEstimateSaved(estimateForTask.id, hours)}
+        />
+      )}
+
       {/* Submit for review modal */}
       {submitForTask && (
         <SubmitReviewModal
           taskTitle={submitForTask.title}
           taskId={submitForTask.id}
+          estimatedHours={submitForTask.estimatedHours}
           onClose={() => setSubmitForTask(null)}
           onSubmitted={handleReviewSubmitted}
         />

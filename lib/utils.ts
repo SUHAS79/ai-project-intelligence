@@ -65,6 +65,13 @@ export function getHealthColor(score: number): string {
   return "text-red-600";
 }
 
+export function formatHours(hours: number): string {
+  if (hours <= 0) return "0h";
+  if (hours < 1) return `${Math.round(hours * 60)}m`;
+  if (Number.isInteger(hours)) return `${hours}h`;
+  return `${hours.toFixed(1)}h`;
+}
+
 export function getHealthBgColor(score: number): string {
   if (score >= 70) return "bg-green-500";
   if (score >= 40) return "bg-yellow-500";

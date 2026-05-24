@@ -53,6 +53,17 @@
 - [x] TeamTab: task matching by assignedToId (reliable) + name fallback
 - [x] Developer dashboard: assigned tasks, stat row, inline status changer
 
+### Feature 4 — Effort Estimation Per Task ✅ (2026-05-25)
+- [x] estimatedHours + actualHours fields on Task (Float?, nullable)
+- [x] SetEstimateModal: quick presets + manual input, auto-prompted on IN_PROGRESS
+- [x] "Set Estimate" button on unestimated IN_PROGRESS tasks
+- [x] SubmitReviewModal: actual hours field with over/under variance badge
+- [x] Estimate displayed on dev task cards (colour-coded actual vs estimated)
+- [x] Manager TaskModal: pre-fill estimatedHours at creation time
+- [x] TasksTab: effort inline under task title
+- [x] ForecastTab: Effort Overview card (totals, accuracy %, unestimated count)
+- [x] Insights: suggestion for unestimated active tasks
+
 ### Feature 3 — Ticket Review Workflow ✅ (2026-05-25)
 - [x] New task status: IN_REVIEW (review gate before DONE)
 - [x] Developer submits task for review with work summary

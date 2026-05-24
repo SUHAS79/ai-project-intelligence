@@ -11,6 +11,8 @@ const UpdateTaskSchema = z.object({
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
   owner: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
+  estimatedHours: z.number().min(0).optional().nullable(),
+  actualHours: z.number().min(0).optional().nullable(),
   startDate: z.string().transform((s) => new Date(s)).optional(),
   endDate: z.string().transform((s) => new Date(s)).optional(),
   completedAt: z.string().transform((s) => new Date(s)).optional().nullable(),

@@ -13,6 +13,7 @@ import {
   PRIORITY_CONFIG,
   formatDate,
   daysFromNow,
+  formatHours,
   cn,
 } from "@/lib/utils";
 import {
@@ -27,7 +28,7 @@ import {
   ClipboardCheck,
   XCircle,
   RotateCcw,
-  FileText,
+  Timer,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -58,6 +59,8 @@ type TaskWithDeps = Task & {
   workSummary?: string | null;
   rejectionReason?: string | null;
   submittedForReviewAt?: string | Date | null;
+  estimatedHours?: number | null;
+  actualHours?: number | null;
 };
 
 interface TasksTabProps {
@@ -334,6 +337,22 @@ export function TasksTab({
                             <ArrowRight className="w-3 h-3" />
                             {task.dependsOn.length}{" "}
                             {task.dependsOn.length === 1 ? "dependency" : "dependencies"}
+                          </div>
+                        )}
+                        {/* Effort estimate */}
+                        {task.estimatedHours && (
+                          <div className="flex items-center gap-1 mt-0.5 text-[11px] text-amber-600">
+                            <Timer className="w-3 h-3" />
+                            {task.actualHours ? (
+                              <>
+                                <span className={task.actualHours > task.estimatedHours ? "text-red-500 font-medium" : "text-emerald-600 font-medium"}>
+                                  {formatHours(task.actualHours)} actual
+                                </span>
+                                <span className="text-slate-400">/ {formatHours(task.estimatedHours)} est.</span>
+                              </>
+                            ) : (
+                              <span>~{formatHours(task.estimatedHours)} est.</span>
+                            )}
                           </div>
                         )}
                         {/* Work summary for IN_REVIEW */}

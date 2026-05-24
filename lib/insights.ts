@@ -286,7 +286,20 @@ function generateSuggestions(
     }
   });
 
-  // 7. Upcoming deadline (tasks due in 3 days that are not done)
+  // 7. In-progress tasks with no estimate
+  const unestimatedInProgress = tasks.filter(
+    (t) => t.status === "IN_PROGRESS" && !(t as any).estimatedHours
+  );
+  if (unestimatedInProgress.length > 2) {
+    suggestions.push({
+      type: "general",
+      severity: "LOW",
+      message: `${unestimatedInProgress.length} in-progress tasks have no time estimate. Estimates improve forecast accuracy.`,
+      affectedTasks: unestimatedInProgress.map((t) => t.title),
+    });
+  }
+
+  // 8. Upcoming deadline (tasks due in 3 days that are not done)
   const soonTasks = tasks.filter((t) => {
     if (t.status === "DONE") return false;
     const daysLeft = Math.floor(

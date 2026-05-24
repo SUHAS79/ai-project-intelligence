@@ -78,6 +78,20 @@
 - [x] Real developer dashboard (/dev): assigned tasks, stat row, inline status change
 - [x] Tasks sorted by urgency (IN_PROGRESS > BLOCKED > TODO > DONE)
 
+## ✅ Feature 4 — Effort Estimation Per Task (Completed)
+- [x] estimatedHours Float? + actualHours Float? on Task model
+- [x] Prisma migration: add_effort_estimation
+- [x] formatHours() utility in lib/utils.ts
+- [x] SetEstimateModal — quick-select presets (1h, 2h, 4h, 1d, 2d, 1w) + manual input
+- [x] Auto-prompt for estimate when dev moves task to IN_PROGRESS with no estimate
+- [x] "Set Estimate" button on IN_PROGRESS tasks with no estimate
+- [x] SubmitReviewModal: actual hours field with variance display (over/under est.)
+- [x] DevDashboardClient: estimate chip on task cards, actual vs estimated colour-coded
+- [x] TaskModal: estimatedHours field for managers to pre-fill
+- [x] TasksTab: effort display inline under task title (estimate + actual vs estimated)
+- [x] ForecastTab: Effort Overview card (total est., total actual, avg accuracy %, unestimated count)
+- [x] Insights: suggestion for too many in-progress tasks with no estimate
+
 ## ✅ Feature 3 — Ticket Review Workflow (Completed)
 - [x] New task status: IN_REVIEW (TODO → IN_PROGRESS → IN_REVIEW → DONE)
 - [x] TaskActivity model: activity log per task (submitted_for_review, approved, rejected, reopened)

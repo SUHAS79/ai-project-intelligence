@@ -60,6 +60,9 @@ model Task {
   priority             String    @default("MEDIUM")
   owner                String?
   assignedToId         String?
+  // Effort estimation fields
+  estimatedHours       Float?
+  actualHours          Float?
   // Review workflow fields
   reviewStatus         String?   // PENDING | APPROVED | REJECTED
   workSummary          String?

@@ -32,7 +32,9 @@ import {
   Zap,
   AlertTriangle,
   Calendar,
+  Timer,
 } from "lucide-react";
+import { formatHours } from "@/lib/utils";
 
 interface ForecastTabProps {
   project: Project;
@@ -176,6 +178,9 @@ export function ForecastTab({ project, tasks }: ForecastTabProps) {
         </div>
       </div>
 
+      {/* Effort Overview */}
+      <EffortOverview tasks={tasks as any} />
+
       {/* Burndown Chart */}
       <ChartCard
         title="Burndown — Tasks Remaining Over Time"
@@ -309,6 +314,76 @@ function ForecastCard({
       <div className="text-[15px] font-bold text-slate-900 leading-tight mb-0.5">{value}</div>
       {sub && <div className="text-xs text-slate-400 mb-1">{sub}</div>}
       <div className="text-xs text-slate-500">{label}</div>
+    </div>
+  );
+}
+
+function EffortOverview({ tasks }: { tasks: (Task & { estimatedHours?: number | null; actualHours?: number | null })[] }) {
+  const withEstimate = tasks.filter((t) => t.estimatedHours);
+  const withActual = tasks.filter((t) => t.actualHours);
+  const totalEstimated = withEstimate.reduce((s, t) => s + (t.estimatedHours ?? 0), 0);
+  const totalActual = withActual.reduce((s, t) => s + (t.actualHours ?? 0), 0);
+  const noEstimate = tasks.filter(
+    (t) => (t.status === "IN_PROGRESS" || t.status === "TODO") && !t.estimatedHours
+  ).length;
+
+  // Accuracy: for tasks with both, compute avg ratio
+  const tasksWithBoth = tasks.filter((t) => t.estimatedHours && t.actualHours);
+  const avgAccuracy =
+    tasksWithBoth.length > 0
+      ? Math.round(
+          (tasksWithBoth.reduce(
+            (s, t) => s + Math.min(t.estimatedHours! / t.actualHours!, 2),
+            0
+          ) /
+            tasksWithBoth.length) *
+            100
+        )
+      : null;
+
+  if (withEstimate.length === 0) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-amber-800">
+        <Timer className="w-4 h-4 shrink-0" />
+        <span>
+          <span className="font-semibold">No effort estimates yet.</span>{" "}
+          Developers can set time estimates when picking up tasks — this helps forecast project hours.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Timer className="w-4 h-4 text-amber-500" />
+        <h3 className="text-sm font-semibold text-slate-900">Effort Overview</h3>
+        <span className="text-xs text-slate-400">{withEstimate.length} of {tasks.length} tasks estimated</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-slate-50 rounded-lg px-4 py-3">
+          <p className="text-lg font-bold text-slate-900 tabular-nums">{formatHours(totalEstimated)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">Total estimated</p>
+        </div>
+        <div className="bg-slate-50 rounded-lg px-4 py-3">
+          <p className={`text-lg font-bold tabular-nums ${totalActual > totalEstimated && totalEstimated > 0 ? "text-red-600" : "text-emerald-600"}`}>
+            {withActual.length > 0 ? formatHours(totalActual) : "—"}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5">Total actual</p>
+        </div>
+        <div className="bg-slate-50 rounded-lg px-4 py-3">
+          <p className={`text-lg font-bold tabular-nums ${avgAccuracy !== null && avgAccuracy < 80 ? "text-red-600" : "text-emerald-600"}`}>
+            {avgAccuracy !== null ? `${avgAccuracy}%` : "—"}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5">Avg accuracy</p>
+        </div>
+        <div className="bg-slate-50 rounded-lg px-4 py-3">
+          <p className={`text-lg font-bold tabular-nums ${noEstimate > 0 ? "text-amber-600" : "text-slate-700"}`}>
+            {noEstimate}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5">Unestimated active</p>
+        </div>
+      </div>
     </div>
   );
 }
