@@ -25,6 +25,9 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
           include: {
             dependsOn: { include: { dependency: true } },
             dependedOnBy: { include: { dependent: true } },
+            assignedTo: {
+              select: { id: true, fullName: true, initials: true },
+            },
           },
           orderBy: { startDate: "asc" },
         },

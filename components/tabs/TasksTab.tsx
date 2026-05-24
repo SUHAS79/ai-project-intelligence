@@ -26,12 +26,23 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-type TaskWithDeps = Task & { dependsOn: any[]; dependedOnBy: any[] };
+type AssignedUser = {
+  id: string;
+  fullName: string;
+  initials: string;
+};
+
+type TaskWithDeps = Task & {
+  dependsOn: any[];
+  dependedOnBy: any[];
+  assignedTo?: AssignedUser | null;
+};
 
 interface TasksTabProps {
   project: Project;
   tasks: TaskWithDeps[];
   insights: ProjectInsights;
+  allUsers?: AssignedUser[];
 }
 
 const STATUS_FILTER_LABELS: Record<string, string> = {
@@ -42,7 +53,7 @@ const STATUS_FILTER_LABELS: Record<string, string> = {
   DONE: "Done",
 };
 
-export function TasksTab({ project, tasks, insights }: TasksTabProps) {
+export function TasksTab({ project, tasks, insights, allUsers = [] }: TasksTabProps) {
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskWithDeps | null>(null);
@@ -95,7 +106,7 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
     router.refresh();
   };
 
-  const availableForDeps = tasks.filter((t) => editingTask ? t.id !== editingTask.id : true);
+  const availableForDeps = tasks.filter((t) => (editingTask ? t.id !== editingTask.id : true));
 
   return (
     <div className="max-w-5xl space-y-4">
@@ -116,10 +127,12 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
                 )}
               >
                 {STATUS_FILTER_LABELS[s]}
-                <span className={cn(
-                  "ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                  filter === s ? "bg-violet-500 text-violet-100" : "bg-slate-100 text-slate-500"
-                )}>
+                <span
+                  className={cn(
+                    "ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                    filter === s ? "bg-violet-500 text-violet-100" : "bg-slate-100 text-slate-500"
+                  )}
+                >
                   {count}
                 </span>
               </button>
@@ -142,7 +155,9 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
             {filter === "ALL" ? "No tasks yet" : `No ${STATUS_FILTER_LABELS[filter].toLowerCase()} tasks`}
           </p>
           <p className="text-sm text-slate-400">
-            {filter === "ALL" ? "Add your first task to start tracking progress" : "Switch filters to see other tasks"}
+            {filter === "ALL"
+              ? "Add your first task to start tracking progress"
+              : "Switch filters to see other tasks"}
           </p>
         </div>
       ) : (
@@ -150,11 +165,21 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Task</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Priority</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Owner</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Due</th>
+                <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Task
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Priority
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Person
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Due
+                </th>
                 <th className="px-4 py-3 w-16" />
               </tr>
             </thead>
@@ -165,6 +190,13 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
                 const overdue = isOverdue(task);
                 const days = daysFromNow(task.endDate);
                 const dueSoon = !overdue && days >= 0 && days <= 3 && task.status !== "DONE";
+
+                // Prefer assignedTo (real user), fall back to legacy owner string
+                const assignedUser = task.assignedTo;
+                const displayName = assignedUser?.fullName ?? task.owner ?? null;
+                const displayInitial = assignedUser?.initials?.charAt(0)
+                  ?? displayName?.charAt(0).toUpperCase()
+                  ?? null;
 
                 return (
                   <tr
@@ -193,7 +225,8 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
                       {task.dependsOn.length > 0 && (
                         <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                           <ArrowRight className="w-3 h-3" />
-                          {task.dependsOn.length} {task.dependsOn.length === 1 ? "dependency" : "dependencies"}
+                          {task.dependsOn.length}{" "}
+                          {task.dependsOn.length === 1 ? "dependency" : "dependencies"}
                         </div>
                       )}
                     </td>
@@ -216,22 +249,26 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
                       <Badge className={priorityCfg.color}>{priorityCfg.label}</Badge>
                     </td>
                     <td className="px-4 py-3.5">
-                      {task.owner ? (
+                      {displayName ? (
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center text-[11px] font-bold text-violet-600 shrink-0">
-                            {task.owner.charAt(0).toUpperCase()}
+                            {displayInitial}
                           </div>
-                          <span className="text-sm text-slate-700 truncate max-w-[100px]">{task.owner}</span>
+                          <span className="text-sm text-slate-700 truncate max-w-[100px]">
+                            {displayName}
+                          </span>
                         </div>
                       ) : (
                         <span className="text-[11px] text-slate-300 italic">Unassigned</span>
                       )}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={cn(
-                        "text-sm",
-                        overdue ? "text-red-500 font-medium" : "text-slate-500"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-sm",
+                          overdue ? "text-red-500 font-medium" : "text-slate-500"
+                        )}
+                      >
                         {formatDate(task.endDate)}
                       </span>
                     </td>
@@ -264,6 +301,7 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreate}
         availableTasks={tasks}
+        allUsers={allUsers}
       />
       {editingTask && (
         <TaskModal
@@ -272,6 +310,7 @@ export function TasksTab({ project, tasks, insights }: TasksTabProps) {
           onSubmit={handleUpdate}
           task={editingTask}
           availableTasks={availableForDeps}
+          allUsers={allUsers}
           title="Edit Task"
         />
       )}

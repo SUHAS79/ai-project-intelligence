@@ -8,10 +8,19 @@ const CreateTaskSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE"]).default("TODO"),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).default("MEDIUM"),
   owner: z.string().optional().nullable(),
+  assignedToId: z.string().optional().nullable(),
   startDate: z.string().transform((s) => new Date(s)),
   endDate: z.string().transform((s) => new Date(s)),
   dependencyIds: z.array(z.string()).optional().default([]),
 });
+
+const TASK_INCLUDE = {
+  dependsOn: { include: { dependency: true } },
+  dependedOnBy: { include: { dependent: true } },
+  assignedTo: {
+    select: { id: true, fullName: true, initials: true },
+  },
+} as const;
 
 export async function GET(
   _request: NextRequest,
@@ -21,10 +30,7 @@ export async function GET(
     const { id } = await params;
     const tasks = await prisma.task.findMany({
       where: { projectId: id },
-      include: {
-        dependsOn: { include: { dependency: true } },
-        dependedOnBy: { include: { dependent: true } },
-      },
+      include: TASK_INCLUDE,
       orderBy: { startDate: "asc" },
     });
     return Response.json(tasks);
@@ -41,20 +47,29 @@ export async function POST(
   try {
     const { id: projectId } = await params;
     const body = await request.json();
-    const { dependencyIds, ...taskData } = CreateTaskSchema.parse(body);
+    const { dependencyIds, assignedToId, ...taskData } = CreateTaskSchema.parse(body);
+
+    // If assignedToId is provided, sync the owner field from the user's name
+    let resolvedOwner = taskData.owner ?? null;
+    if (assignedToId) {
+      const user = await prisma.user.findUnique({
+        where: { id: assignedToId },
+        select: { fullName: true },
+      });
+      if (user) resolvedOwner = user.fullName;
+    }
 
     const task = await prisma.task.create({
       data: {
         ...taskData,
+        owner: resolvedOwner,
+        assignedToId: assignedToId ?? null,
         projectId,
         dependsOn: {
           create: dependencyIds.map((depId) => ({ dependencyId: depId })),
         },
       },
-      include: {
-        dependsOn: { include: { dependency: true } },
-        dependedOnBy: { include: { dependent: true } },
-      },
+      include: TASK_INCLUDE,
     });
     return Response.json(task, { status: 201 });
   } catch (error) {

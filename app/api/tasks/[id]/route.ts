@@ -8,11 +8,20 @@ const UpdateTaskSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
   owner: z.string().optional().nullable(),
+  assignedToId: z.string().optional().nullable(),
   startDate: z.string().transform((s) => new Date(s)).optional(),
   endDate: z.string().transform((s) => new Date(s)).optional(),
   completedAt: z.string().transform((s) => new Date(s)).optional().nullable(),
   dependencyIds: z.array(z.string()).optional(),
 });
+
+const TASK_INCLUDE = {
+  dependsOn: { include: { dependency: true } },
+  dependedOnBy: { include: { dependent: true } },
+  assignedTo: {
+    select: { id: true, fullName: true, initials: true },
+  },
+} as const;
 
 export async function GET(
   _request: NextRequest,
@@ -22,10 +31,7 @@ export async function GET(
     const { id } = await params;
     const task = await prisma.task.findUnique({
       where: { id },
-      include: {
-        dependsOn: { include: { dependency: true } },
-        dependedOnBy: { include: { dependent: true } },
-      },
+      include: TASK_INCLUDE,
     });
     if (!task) return Response.json({ error: "Not found" }, { status: 404 });
     return Response.json(task);
@@ -42,7 +48,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { dependencyIds, ...taskData } = UpdateTaskSchema.parse(body);
+    const { dependencyIds, assignedToId, ...taskData } = UpdateTaskSchema.parse(body);
 
     // Auto-set completedAt when status changes to DONE
     if (taskData.status === "DONE" && !taskData.completedAt) {
@@ -52,10 +58,28 @@ export async function PUT(
       (taskData as any).completedAt = null;
     }
 
+    // If assignedToId is explicitly provided (even null to unassign), sync owner
+    let ownerUpdate: { owner?: string | null; assignedToId?: string | null } = {};
+    if (assignedToId !== undefined) {
+      if (assignedToId === null || assignedToId === "") {
+        ownerUpdate = { assignedToId: null, owner: null };
+      } else {
+        const user = await prisma.user.findUnique({
+          where: { id: assignedToId },
+          select: { fullName: true },
+        });
+        ownerUpdate = {
+          assignedToId,
+          owner: user?.fullName ?? taskData.owner ?? null,
+        };
+      }
+    }
+
     const task = await prisma.task.update({
       where: { id },
       data: {
         ...taskData,
+        ...ownerUpdate,
         ...(dependencyIds !== undefined && {
           dependsOn: {
             deleteMany: {},
@@ -63,10 +87,7 @@ export async function PUT(
           },
         }),
       },
-      include: {
-        dependsOn: { include: { dependency: true } },
-        dependedOnBy: { include: { dependent: true } },
-      },
+      include: TASK_INCLUDE,
     });
     return Response.json(task);
   } catch (error) {

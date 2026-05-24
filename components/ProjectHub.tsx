@@ -192,7 +192,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
 
       {/* Content */}
       <div className="flex-1 p-8 bg-slate-100">
-        {currentTab === "tasks"    && <TasksTab    project={project} tasks={project.tasks} insights={insights} />}
+        {currentTab === "tasks"    && <TasksTab    project={project} tasks={project.tasks} insights={insights} allUsers={allUsers} />}
         {currentTab === "forecast" && <ForecastTab project={project} tasks={project.tasks} />}
         {currentTab === "gantt"    && <GanttTab    tasks={project.tasks} />}
         {currentTab === "risks"    && <RisksTab    projectId={project.id} risks={project.risks} insights={insights} />}
@@ -205,6 +205,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
               title: t.title,
               status: t.status,
               owner: (t as any).owner ?? null,
+              assignedToId: (t as any).assignedToId ?? null,
             }))}
             allUsers={allUsers}
             isManager={isManager}

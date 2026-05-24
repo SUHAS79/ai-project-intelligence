@@ -27,6 +27,7 @@ type TaskSummary = {
   title: string;
   status: string;
   owner: string | null;
+  assignedToId?: string | null;
 };
 
 type AvailableUser = {
@@ -61,11 +62,13 @@ export function TeamTab({
   const available = allUsers.filter((u) => !memberUserIds.has(u.id));
 
   // For each member, compute their tasks in this project
+  // Prefer assignedToId match (reliable); fall back to owner name match (legacy seed data)
   function getMemberTasks(member: Member) {
-    const name = member.user.fullName.toLowerCase();
-    return tasks.filter(
-      (t) => t.owner && t.owner.toLowerCase() === name
-    );
+    return tasks.filter((t) => {
+      if (t.assignedToId) return t.assignedToId === member.userId;
+      if (t.owner) return t.owner.toLowerCase() === member.user.fullName.toLowerCase();
+      return false;
+    });
   }
 
   async function handleRemove(member: Member) {
