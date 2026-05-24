@@ -128,6 +128,18 @@
 - [x] TypeScript: 0 errors
 - [x] Build: passes
 
+## ✅ Feature 6 — Daily/Weekly/Monthly Report Generator (Completed)
+- [x] lib/report.ts: ReportPeriod type ("daily" | "weekly" | "monthly"), period param on generateReport()
+- [x] lib/report.ts: renamed completedThisWeek → completedInPeriod; added inReviewTasks; WeeklyReport alias kept for back-compat
+- [x] lib/report.ts: generatePortfolioReport() — cross-project summary with health scores, completions, blockers, recommendations
+- [x] GET /api/projects/[id]/report?period= — accepts daily/weekly/monthly, default weekly
+- [x] GET /api/reports/portfolio?period= — manager-only, cross-project portfolio report
+- [x] ReportTab: period toggle (Daily / Weekly / Monthly) — re-fetches on change, labels update accordingly
+- [x] ReportTab: Pending Review (IN_REVIEW) section added
+- [x] PortfolioReportModal: cross-project modal on manager dashboard — summary stats, project health table, period toggle, copy to clipboard
+- [x] DashboardClient: "Portfolio Report" button in header opens PortfolioReportModal
+- [x] TypeScript: 0 errors, build: passes
+
 ## 🔜 Phase 3 — Polish (Deferred)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

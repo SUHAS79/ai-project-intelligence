@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { WeeklyReport } from "@/lib/report";
+import type { ProjectReport, ReportPeriod } from "@/lib/report";
 import { HealthScore } from "../HealthScore";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -14,15 +15,24 @@ import {
   ShieldAlert,
   Brain,
   Zap,
+  ClipboardCheck,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 
+const PERIODS: { value: ReportPeriod; label: string }[] = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+];
+
 export function ReportTab({ projectId }: { projectId: string }) {
-  const { data: report, isLoading, error } = useQuery<WeeklyReport>({
-    queryKey: ["report", projectId],
+  const [period, setPeriod] = useState<ReportPeriod>("weekly");
+
+  const { data: report, isLoading, error } = useQuery<ProjectReport>({
+    queryKey: ["report", projectId, period],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/report`);
+      const res = await fetch(`/api/projects/${projectId}/report?period=${period}`);
       if (!res.ok) throw new Error("Failed to fetch report");
       return res.json();
     },
@@ -34,9 +44,18 @@ export function ReportTab({ projectId }: { projectId: string }) {
     toast.success("Report copied to clipboard");
   };
 
+  const periodCompletedLabel =
+    period === "daily" ? "Completed Today" : period === "weekly" ? "Completed This Week" : "Completed This Month";
+
   if (isLoading) {
     return (
       <div className="max-w-3xl space-y-4">
+        {/* Period toggle skeleton */}
+        <div className="flex gap-2 mb-5">
+          {PERIODS.map((p) => (
+            <div key={p.value} className="h-8 w-20 bg-slate-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
         {[...Array(4)].map((_, i) => (
           <div key={i} className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5 animate-pulse">
             <div className="h-3 bg-slate-100 rounded w-32 mb-4" />
@@ -68,7 +87,7 @@ export function ReportTab({ projectId }: { projectId: string }) {
             <FileText className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Weekly Status Report</h2>
+            <h2 className="text-sm font-bold text-slate-900">{report.period.charAt(0).toUpperCase() + report.period.slice(1)} Status Report</h2>
             <p className="text-xs text-slate-400">
               {report.reportPeriod} · Generated {report.generatedAt}
             </p>
@@ -78,6 +97,23 @@ export function ReportTab({ projectId }: { projectId: string }) {
           <Copy className="w-3.5 h-3.5" />
           Copy
         </Button>
+      </div>
+
+      {/* Period toggle */}
+      <div className="flex gap-1.5 mb-5 bg-slate-100 p-1 rounded-xl w-fit">
+        {PERIODS.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => setPeriod(p.value)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              period === p.value
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       <div className="space-y-4">
@@ -90,20 +126,20 @@ export function ReportTab({ projectId }: { projectId: string }) {
           </div>
         </section>
 
-        {/* Completed This Week */}
+        {/* Completed in period */}
         <section className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <h3 className="text-sm font-semibold text-slate-900">Completed This Week</h3>
+            <h3 className="text-sm font-semibold text-slate-900">{periodCompletedLabel}</h3>
             <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 ml-auto">
-              {report.completedThisWeek.length} tasks
+              {report.completedInPeriod.length} tasks
             </Badge>
           </div>
-          {report.completedThisWeek.length === 0 ? (
-            <p className="text-sm text-slate-400 italic">No tasks completed this week.</p>
+          {report.completedInPeriod.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">No tasks completed in this period.</p>
           ) : (
             <ul className="space-y-1.5">
-              {report.completedThisWeek.map((task) => (
+              {report.completedInPeriod.map((task) => (
                 <li key={task.id} className="flex items-center gap-2.5 text-sm">
                   <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
@@ -141,6 +177,27 @@ export function ReportTab({ projectId }: { projectId: string }) {
             </ul>
           )}
         </section>
+
+        {/* In Review */}
+        {report.inReviewTasks.length > 0 && (
+          <section className="bg-purple-50 rounded-xl border border-purple-200 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <ClipboardCheck className="w-4 h-4 text-purple-600" />
+              <h3 className="text-sm font-semibold text-purple-800">Pending Review</h3>
+              <Badge className="bg-purple-100 text-purple-700 border-purple-200 ml-auto">
+                {report.inReviewTasks.length} tasks
+              </Badge>
+            </div>
+            <ul className="space-y-1.5">
+              {report.inReviewTasks.map((task) => (
+                <li key={task.id} className="flex items-center gap-2 text-sm text-purple-700">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
+                  {task.title}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* At Risk / Blocked */}
         {(report.atRiskTasks.length > 0 || report.blockedTasks.length > 0) && (
@@ -244,9 +301,13 @@ function SectionHeader({ label }: { label: string }) {
   );
 }
 
-function buildReportText(report: WeeklyReport): string {
+function buildReportText(report: ProjectReport): string {
+  const periodLabel = report.period.charAt(0).toUpperCase() + report.period.slice(1);
+  const completedLabel =
+    report.period === "daily" ? "Completed Today" : report.period === "weekly" ? "Completed This Week" : "Completed This Month";
+
   const lines: string[] = [
-    `# Weekly Status Report — ${report.projectName}`,
+    `# ${periodLabel} Status Report — ${report.projectName}`,
     `Period: ${report.reportPeriod}`,
     `Generated: ${report.generatedAt}`,
     `Health Score: ${report.healthScore}/100 (${report.healthLabel})`,
@@ -254,15 +315,23 @@ function buildReportText(report: WeeklyReport): string {
     "## Executive Summary",
     report.executiveSummary,
     "",
-    "## Completed This Week",
-    ...(report.completedThisWeek.length > 0
-      ? report.completedThisWeek.map((t) => `- ✓ ${t.title}${t.owner ? ` (${t.owner})` : ""}`)
-      : ["No tasks completed this week."]),
+    `## ${completedLabel}`,
+    ...(report.completedInPeriod.length > 0
+      ? report.completedInPeriod.map((t) => `- ✓ ${t.title}${t.owner ? ` (${t.owner})` : ""}`)
+      : ["No tasks completed in this period."]),
     "",
     "## In Progress",
     ...(report.inProgressTasks.length > 0
       ? report.inProgressTasks.map((t) => `- ${t.title}`)
       : ["No tasks in progress."]),
+  ];
+
+  if (report.inReviewTasks.length > 0) {
+    lines.push("", "## Pending Review");
+    report.inReviewTasks.forEach((t) => lines.push(`- 🔍 ${t.title}`));
+  }
+
+  lines.push(
     "",
     "## At Risk",
     ...(report.atRiskTasks.length > 0 ? report.atRiskTasks.map((t) => `- ⚠️ ${t.title}`) : ["None."]),
@@ -276,7 +345,8 @@ function buildReportText(report: WeeklyReport): string {
       : ["No active risks."]),
     "",
     "## NAMO Recommendations",
-    ...report.aiRecommendations.map((r) => `→ ${r}`),
-  ];
+    ...report.aiRecommendations.map((r) => `→ ${r}`)
+  );
+
   return lines.join("\n");
 }

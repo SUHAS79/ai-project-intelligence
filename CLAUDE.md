@@ -62,6 +62,7 @@ app/
     reviews/              GET → IN_REVIEW queue (senior dev scoped to their projects, manager sees all)
     escalations/          GET (scoped by role) | POST (create escalation)
     escalations/[id]/     PATCH (respond/resolve) | DELETE (creator or manager)
+    reports/portfolio/    GET → cross-project portfolio report (manager only, ?period=daily|weekly|monthly)
     seed/                 POST → re-seeds demo data
 
 components/
@@ -76,6 +77,7 @@ components/
   EscalateModal.tsx       Developer/senior sends escalation (task context + message + target)
   RespondEscalationModal.tsx  Manager/senior dev responds or resolves an escalation
   EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards)
+  PortfolioReportModal.tsx  Manager-only cross-project report modal (period toggle, health table, copy)
   HealthScore.tsx         Visual health score gauge component
   tabs/
     TasksTab.tsx          Task table with inline status select, filter pills

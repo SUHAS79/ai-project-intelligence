@@ -87,6 +87,16 @@
 - [x] Senior Dev dashboard: "Incoming Escalations" section with open badge
 - [x] Manager dashboard: "Open Escalations" panel with respond/resolve
 
+### Feature 6 — Daily/Weekly/Monthly Report Generator ✅ (2026-05-25)
+- [x] Period selector in ReportTab (Daily / Weekly / Monthly toggle) — re-fetches on change
+- [x] lib/report.ts generateReport() takes period param; lookback window: 1/7/30 days
+- [x] completedInPeriod replaces completedThisWeek; inReviewTasks section added
+- [x] GET /api/projects/[id]/report?period= — query param support
+- [x] generatePortfolioReport() — cross-project report function
+- [x] GET /api/reports/portfolio?period= — manager-only portfolio API
+- [x] PortfolioReportModal — cross-project summary with health table, stats, AI recs, copy
+- [x] DashboardClient: "Portfolio Report" button in page header
+
 ---
 
 ## Next Priorities (Phase 3)

@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectModal } from "./ProjectModal";
 import { Button } from "./ui/Button";
-import { Plus, FolderOpen, TrendingDown, ShieldAlert, CheckCircle2, Zap, Target, Siren } from "lucide-react";
+import { Plus, FolderOpen, TrendingDown, ShieldAlert, CheckCircle2, Zap, Target, Siren, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Project, Risk } from "@/app/generated/prisma/client";
 import type { ProjectInsights } from "@/lib/insights";
 import { getHealthColor } from "@/lib/utils";
 import { EscalationsSection } from "./EscalationsSection";
+import { PortfolioReportModal } from "./PortfolioReportModal";
 
 type ProjectWithInsights = Project & {
   tasks: any[];
@@ -43,6 +44,7 @@ export function DashboardClient({
 }) {
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPortfolioReport, setShowPortfolioReport] = useState(false);
 
   const totalProjects = initialProjects.length;
   const totalTasks = initialProjects.reduce((s, p) => s + p.tasks.length, 0);
@@ -85,10 +87,19 @@ export function DashboardClient({
             Neural Analytics for Management Optimization
           </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="w-3.5 h-3.5" />
-          New Project
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPortfolioReport(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Portfolio Report
+          </button>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="w-3.5 h-3.5" />
+            New Project
+          </Button>
+        </div>
       </div>
 
       {/* Summary band */}
@@ -197,6 +208,10 @@ export function DashboardClient({
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateProject}
       />
+
+      {showPortfolioReport && (
+        <PortfolioReportModal onClose={() => setShowPortfolioReport(false)} />
+      )}
     </div>
   );
 }
