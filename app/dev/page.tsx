@@ -45,12 +45,41 @@ export default async function DevDashboardPage() {
     });
   }
 
+  const ESCALATION_INCLUDE = {
+    project: { select: { id: true, name: true } },
+    task: { select: { id: true, title: true, status: true, priority: true } },
+    createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
+    respondedBy: { select: { id: true, fullName: true, initials: true } },
+  } as const;
+
+  // My escalations (sent by this user)
+  const myEscalations = await prisma.escalation.findMany({
+    where: { createdById: user.userId },
+    include: ESCALATION_INCLUDE,
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Incoming escalations (for senior dev: targeted at them)
+  let incomingEscalations: any[] = [];
+  if (isSeniorDev) {
+    incomingEscalations = await prisma.escalation.findMany({
+      where: {
+        targetRole: { in: ["senior_developer", "both"] },
+        project: { members: { some: { userId: user.userId } } },
+      },
+      include: ESCALATION_INCLUDE,
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   return (
     <AppShell>
       <DevDashboardClient
         user={user}
         tasks={tasks as any}
         reviewQueue={reviewQueue as any}
+        myEscalations={myEscalations as any}
+        incomingEscalations={incomingEscalations as any}
       />
     </AppShell>
   );

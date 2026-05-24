@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectModal } from "./ProjectModal";
 import { Button } from "./ui/Button";
-import { Plus, FolderOpen, TrendingDown, ShieldAlert, CheckCircle2, Zap, Target } from "lucide-react";
+import { Plus, FolderOpen, TrendingDown, ShieldAlert, CheckCircle2, Zap, Target, Siren } from "lucide-react";
 import { toast } from "sonner";
 import { Project, Risk } from "@/app/generated/prisma/client";
 import type { ProjectInsights } from "@/lib/insights";
 import { getHealthColor } from "@/lib/utils";
+import { EscalationsSection } from "./EscalationsSection";
 
 type ProjectWithInsights = Project & {
   tasks: any[];
@@ -17,7 +18,29 @@ type ProjectWithInsights = Project & {
   insights: ProjectInsights;
 };
 
-export function DashboardClient({ initialProjects }: { initialProjects: ProjectWithInsights[] }) {
+type EscalationFull = {
+  id: string;
+  message: string;
+  status: string;
+  targetRole: string;
+  response: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  project: { id: string; name: string };
+  task: { id: string; title: string; status: string; priority: string } | null;
+  createdBy: { id: string; fullName: string; initials: string; role: string };
+  respondedBy: { id: string; fullName: string; initials: string } | null;
+};
+
+export function DashboardClient({
+  initialProjects,
+  openEscalations = [],
+  userId = "",
+}: {
+  initialProjects: ProjectWithInsights[];
+  openEscalations?: EscalationFull[];
+  userId?: string;
+}) {
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -144,6 +167,28 @@ export function DashboardClient({ initialProjects }: { initialProjects: ProjectW
           {initialProjects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
+        </div>
+      )}
+
+      {/* Escalations panel */}
+      {openEscalations.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Siren className="w-4 h-4 text-orange-500" />
+            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              Open Escalations
+            </h2>
+            <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+              {openEscalations.length}
+            </span>
+          </div>
+          <EscalationsSection
+            escalations={openEscalations}
+            userRole="manager"
+            userId={userId}
+            title="Open Escalations"
+            emptyMessage="No open escalations."
+          />
         </div>
       )}
 

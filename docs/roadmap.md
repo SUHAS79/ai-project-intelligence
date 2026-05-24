@@ -75,6 +75,18 @@
 - [x] Activity log inline in TasksTab (expandable)
 - [x] STATUS_CONFIG + insights engine updated for IN_REVIEW
 
+### Feature 5 — Request Escalation ✅ (2026-05-25)
+- [x] Escalation model with projectId, taskId (optional), createdById, message, status, targetRole, response, respondedById
+- [x] Prisma migration + named relations (EscalationCreator, EscalationResponder)
+- [x] GET/POST /api/escalations — role-scoped retrieval + creation
+- [x] PATCH/DELETE /api/escalations/[id] — respond/resolve/delete
+- [x] EscalateModal — auto-attaches task context, target role, message
+- [x] RespondEscalationModal — respond or resolve with note
+- [x] EscalationsSection — shared card list with status badges, expand, delete
+- [x] Developer dashboard: "Escalate" button on blocked/in-progress tasks + "My Escalations" list
+- [x] Senior Dev dashboard: "Incoming Escalations" section with open badge
+- [x] Manager dashboard: "Open Escalations" panel with respond/resolve
+
 ---
 
 ## Next Priorities (Phase 3)

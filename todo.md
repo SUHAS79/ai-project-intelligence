@@ -108,6 +108,26 @@
 - [x] STATUS_CONFIG: added IN_REVIEW (purple)
 - [x] Insights: IN_REVIEW excluded from overdue; counted as near-done in momentum score
 
+## ✅ Feature 5 — Request Escalation (Completed)
+- [x] Escalation model: id, projectId, taskId?, createdById, message, status, targetRole, response, respondedById, respondedAt
+- [x] Prisma migration: add_escalation
+- [x] Named Prisma relations: EscalationCreator + EscalationResponder on User; escalations[] on Project and Task
+- [x] GET /api/escalations — scoped by role (dev: own, senior: targeted+project, manager: all)
+- [x] POST /api/escalations — create with task context + targetRole
+- [x] PATCH /api/escalations/[id] — respond or resolve (manager + senior dev only)
+- [x] DELETE /api/escalations/[id] — creator or manager can delete OPEN escalations
+- [x] EscalateModal — task auto-context, target role radio, message textarea
+- [x] RespondEscalationModal — respond (keep open) or resolve with response note
+- [x] EscalationsSection — shared card list with expand/respond/delete; status badges
+- [x] DevDashboardClient: "Escalate" button on BLOCKED/IN_PROGRESS tasks
+- [x] DevDashboardClient: "My Escalations" section for developers
+- [x] DevDashboardClient: "Incoming Escalations" section for senior devs (badge count)
+- [x] app/dev/page.tsx: fetch myEscalations + incomingEscalations (senior dev only)
+- [x] DashboardClient: "Open Escalations" panel for manager (with badge count)
+- [x] app/page.tsx: fetch openEscalations for manager dashboard
+- [x] TypeScript: 0 errors
+- [x] Build: passes
+
 ## 🔜 Phase 3 — Polish (Deferred)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

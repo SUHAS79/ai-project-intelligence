@@ -17,6 +17,8 @@ import {
   XCircle,
   ClipboardCheck,
   Timer,
+  Siren,
+  MessageSquare,
 } from "lucide-react";
 import {
   cn,
@@ -30,7 +32,23 @@ import type { TokenPayload } from "@/lib/roles";
 import { SubmitReviewModal } from "./SubmitReviewModal";
 import { SetEstimateModal } from "./SetEstimateModal";
 import { ReviewQueueSection } from "./ReviewQueueSection";
+import { EscalateModal } from "./EscalateModal";
+import { EscalationsSection } from "./EscalationsSection";
 import { toast } from "sonner";
+
+type EscalationFull = {
+  id: string;
+  message: string;
+  status: string;
+  targetRole: string;
+  response: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  project: { id: string; name: string };
+  task: { id: string; title: string; status: string; priority: string } | null;
+  createdBy: { id: string; fullName: string; initials: string; role: string };
+  respondedBy: { id: string; fullName: string; initials: string } | null;
+};
 
 type ReviewTask = {
   id: string;
@@ -68,6 +86,8 @@ interface DevDashboardClientProps {
   user: TokenPayload;
   tasks: AssignedTask[];
   reviewQueue?: ReviewTask[];
+  myEscalations?: EscalationFull[];
+  incomingEscalations?: EscalationFull[];
 }
 
 const STATUS_ORDER = ["IN_REVIEW", "IN_PROGRESS", "BLOCKED", "TODO", "DONE"];
@@ -76,11 +96,14 @@ export function DevDashboardClient({
   user,
   tasks: initialTasks,
   reviewQueue = [],
+  myEscalations = [],
+  incomingEscalations = [],
 }: DevDashboardClientProps) {
   const router = useRouter();
   const [tasks, setTasks] = useState<AssignedTask[]>(initialTasks);
   const [submitForTask, setSubmitForTask] = useState<AssignedTask | null>(null);
   const [estimateForTask, setEstimateForTask] = useState<AssignedTask | null>(null);
+  const [escalateForTask, setEscalateForTask] = useState<AssignedTask | null>(null);
 
   const isSeniorDev = user.role === "senior_developer";
 
@@ -359,6 +382,16 @@ export function DevDashboardClient({
                             Submit for Review
                           </button>
                         )}
+                        {/* Escalate button for BLOCKED or IN_PROGRESS tasks */}
+                        {(task.status === "BLOCKED" || task.status === "IN_PROGRESS") && (
+                          <button
+                            onClick={() => setEscalateForTask(task)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 border border-orange-200 hover:bg-orange-100 rounded-lg transition-colors"
+                          >
+                            <Siren className="w-3.5 h-3.5" />
+                            Escalate
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -394,6 +427,48 @@ export function DevDashboardClient({
             })}
           </div>
         )}
+      </section>
+
+      {/* ── INCOMING ESCALATIONS (senior dev only) ── */}
+      {isSeniorDev && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Siren className="w-4 h-4 text-orange-500" />
+            <h2 className="text-sm font-semibold text-slate-800">Incoming Escalations</h2>
+            {incomingEscalations.filter((e) => e.status === "OPEN").length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {incomingEscalations.filter((e) => e.status === "OPEN").length}
+              </span>
+            )}
+          </div>
+          <EscalationsSection
+            escalations={incomingEscalations}
+            userRole={user.role}
+            userId={user.userId}
+            title="Incoming Escalations"
+            emptyMessage="No escalations directed to you."
+          />
+        </section>
+      )}
+
+      {/* ── MY ESCALATIONS ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare className="w-4 h-4 text-slate-500" />
+          <h2 className="text-sm font-semibold text-slate-800">My Escalations</h2>
+          {myEscalations.filter((e) => e.status !== "RESOLVED").length > 0 && (
+            <span className="w-5 h-5 rounded-full bg-slate-400 text-white text-[10px] font-bold flex items-center justify-center">
+              {myEscalations.filter((e) => e.status !== "RESOLVED").length}
+            </span>
+          )}
+        </div>
+        <EscalationsSection
+          escalations={myEscalations}
+          userRole={user.role}
+          userId={user.userId}
+          title="My Escalations"
+          emptyMessage="You haven't sent any escalations yet. Use the Escalate button on a task when you're blocked."
+        />
       </section>
 
       {/* Profile shortcut */}
@@ -433,6 +508,20 @@ export function DevDashboardClient({
           estimatedHours={submitForTask.estimatedHours}
           onClose={() => setSubmitForTask(null)}
           onSubmitted={handleReviewSubmitted}
+        />
+      )}
+
+      {/* Escalate modal */}
+      {escalateForTask && (
+        <EscalateModal
+          project={escalateForTask.project}
+          task={escalateForTask}
+          userRole={user.role}
+          onClose={() => setEscalateForTask(null)}
+          onSuccess={() => {
+            setEscalateForTask(null);
+            router.refresh();
+          }}
         />
       )}
     </div>

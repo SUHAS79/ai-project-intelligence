@@ -60,6 +60,8 @@ app/
     tasks/[id]/review/    POST (submit) | PATCH (approve/reject/reopen)
     risks/[id]/           GET/PUT/DELETE
     reviews/              GET → IN_REVIEW queue (senior dev scoped to their projects, manager sees all)
+    escalations/          GET (scoped by role) | POST (create escalation)
+    escalations/[id]/     PATCH (respond/resolve) | DELETE (creator or manager)
     seed/                 POST → re-seeds demo data
 
 components/
@@ -71,6 +73,9 @@ components/
   ProjectModal.tsx        Create/edit project modal
   TaskModal.tsx           Create/edit task modal (with dep multi-select)
   RiskModal.tsx           Create/edit risk modal
+  EscalateModal.tsx       Developer/senior sends escalation (task context + message + target)
+  RespondEscalationModal.tsx  Manager/senior dev responds or resolves an escalation
+  EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards)
   HealthScore.tsx         Visual health score gauge component
   tabs/
     TasksTab.tsx          Task table with inline status select, filter pills
