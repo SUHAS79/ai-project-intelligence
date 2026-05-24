@@ -39,12 +39,30 @@
 - [x] Prisma migration + seed (3 demo users)
 - [x] JWT auth via jose + bcryptjs password hashing
 - [x] Single login page with NAMO branding and demo quick-fill
-- [x] Middleware: role-based route protection (manager/dev/senior_dev)
-- [x] Manager dashboard: Team management (create, edit role/status, deactivate)
+- [x] proxy.ts: role-based route protection (manager/dev/senior_dev)
+- [x] Manager dashboard: People management (create, edit role/status, deactivate)
 - [x] Developer dashboard placeholder (/dev)
 - [x] Profile page for all roles (view info + change password)
 - [x] Sidebar: role-aware nav + user card + logout
 - [x] lib/roles.ts (client-safe) + lib/auth.ts (server-only) module split
+
+### Feature 2 — Task Assignment & Developer Dashboard ✅ (2026-05-25)
+- [x] assignedToId on Task — real user FK, syncs owner string for legacy compat
+- [x] "Owner" renamed to "Person" throughout task UI
+- [x] Task creation/editing uses real-user dropdown (populated from org members)
+- [x] TeamTab: task matching by assignedToId (reliable) + name fallback
+- [x] Developer dashboard: assigned tasks, stat row, inline status changer
+
+### Feature 3 — Ticket Review Workflow ✅ (2026-05-25)
+- [x] New task status: IN_REVIEW (review gate before DONE)
+- [x] Developer submits task for review with work summary
+- [x] Senior Dev Review Queue on /dev dashboard (scoped to their projects)
+- [x] Manager sees IN_REVIEW tasks in TasksTab with Approve/Reject buttons
+- [x] Rejected tasks return to IN_PROGRESS with visible rejection reason
+- [x] Manager can reopen DONE tasks
+- [x] TaskActivity model: full audit log per task
+- [x] Activity log inline in TasksTab (expandable)
+- [x] STATUS_CONFIG + insights engine updated for IN_REVIEW
 
 ---
 

@@ -70,6 +70,7 @@ interface ProjectHubProps {
   members: ProjectMember[];
   allUsers: OrgUser[];
   isManager: boolean;
+  userRole?: string;
 }
 
 const TABS = [
@@ -82,7 +83,7 @@ const TABS = [
   { id: "report",   label: "Report",     icon: FileText },
 ];
 
-export function ProjectHub({ project, insights, activeTab, members, allUsers, isManager }: ProjectHubProps) {
+export function ProjectHub({ project, insights, activeTab, members, allUsers, isManager, userRole = "manager" }: ProjectHubProps) {
   const router = useRouter();
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentTab, setCurrentTab] = useState(activeTab);
@@ -192,7 +193,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
 
       {/* Content */}
       <div className="flex-1 p-8 bg-slate-100">
-        {currentTab === "tasks"    && <TasksTab    project={project} tasks={project.tasks} insights={insights} allUsers={allUsers} />}
+        {currentTab === "tasks"    && <TasksTab    project={project} tasks={project.tasks} insights={insights} allUsers={allUsers} userRole={userRole} isManager={isManager} />}
         {currentTab === "forecast" && <ForecastTab project={project} tasks={project.tasks} />}
         {currentTab === "gantt"    && <GanttTab    tasks={project.tasks} />}
         {currentTab === "risks"    && <RisksTab    projectId={project.id} risks={project.risks} insights={insights} />}

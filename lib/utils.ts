@@ -9,6 +9,7 @@ export const STATUS_CONFIG = {
   TODO: { label: "To Do", color: "bg-slate-100 text-slate-700 border-slate-200" },
   IN_PROGRESS: { label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200" },
   BLOCKED: { label: "Blocked", color: "bg-red-100 text-red-700 border-red-200" },
+  IN_REVIEW: { label: "In Review", color: "bg-purple-100 text-purple-700 border-purple-200" },
   DONE: { label: "Done", color: "bg-green-100 text-green-700 border-green-200" },
 } as const;
 

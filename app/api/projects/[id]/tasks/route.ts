@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
+
 const CreateTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional().nullable(),
-  status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE"]).default("TODO"),
+  status: z.enum(TASK_STATUSES).default("TODO"),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).default("MEDIUM"),
   owner: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
@@ -14,12 +16,12 @@ const CreateTaskSchema = z.object({
   dependencyIds: z.array(z.string()).optional().default([]),
 });
 
-const TASK_INCLUDE = {
+export const TASK_INCLUDE = {
   dependsOn: { include: { dependency: true } },
   dependedOnBy: { include: { dependent: true } },
-  assignedTo: {
-    select: { id: true, fullName: true, initials: true },
-  },
+  assignedTo: { select: { id: true, fullName: true, initials: true } },
+  reviewedBy: { select: { id: true, fullName: true, initials: true } },
+  activities: { orderBy: { createdAt: "desc" as const }, take: 10 },
 } as const;
 
 export async function GET(
@@ -49,7 +51,7 @@ export async function POST(
     const body = await request.json();
     const { dependencyIds, assignedToId, ...taskData } = CreateTaskSchema.parse(body);
 
-    // If assignedToId is provided, sync the owner field from the user's name
+    // If assignedToId provided, sync owner string
     let resolvedOwner = taskData.owner ?? null;
     if (assignedToId) {
       const user = await prisma.user.findUnique({

@@ -53,6 +53,7 @@ export interface ProjectInsights {
     inProgress: number;
     blocked: number;
     todo: number;
+    inReview: number;
     overdue: number;
     completionRate: number;
   };
@@ -63,7 +64,7 @@ function getDelayedTasks(tasks: Task[]): DelayedTask[] {
   today.setHours(0, 0, 0, 0);
 
   return tasks
-    .filter((t) => t.status !== "DONE" && new Date(t.endDate) < today)
+    .filter((t) => t.status !== "DONE" && t.status !== "IN_REVIEW" && new Date(t.endDate) < today)
     .map((t) => {
       const daysOverdue = Math.floor(
         (today.getTime() - new Date(t.endDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -342,8 +343,10 @@ function computeHealthScore(
   const riskScore = Math.max(0, 100 - riskPenalty) * 0.3;
 
   // Component 3: Progress momentum (30%)
+  // IN_REVIEW counts as near-done (weight 0.8) for momentum
   const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const progressRate = (done + inProgress * 0.5) / total;
+  const inReview = tasks.filter((t) => t.status === "IN_REVIEW").length;
+  const progressRate = (done + inReview * 0.8 + inProgress * 0.5) / total;
   const momentumScore = progressRate * 100 * 0.3;
 
   const total_score = Math.round(taskScore + riskScore + momentumScore);
@@ -368,9 +371,10 @@ export function computeInsights(
     healthScore >= 70 ? "Healthy" : healthScore >= 40 ? "At Risk" : "Critical";
 
   const done = tasks.filter((t) => t.status === "DONE").length;
-  const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS").length;
+  const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS" || t.status === "IN_REVIEW").length;
   const blocked = tasks.filter((t) => t.status === "BLOCKED").length;
   const todo = tasks.filter((t) => t.status === "TODO").length;
+  const inReview = tasks.filter((t) => t.status === "IN_REVIEW").length;
 
   return {
     healthScore,
@@ -387,6 +391,7 @@ export function computeInsights(
       inProgress,
       blocked,
       todo,
+      inReview,
       overdue: delayedTasks.length,
       completionRate: tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0,
     },

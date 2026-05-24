@@ -24,7 +24,7 @@ This is a full-stack AI-powered project management app built with Next.js, SQLit
 - **JWT sessions** via `jose` — 7-day cookie (`namo-session`), HttpOnly, SameSite=Lax
 - **Passwords** hashed with `bcryptjs` (salt rounds: 12)
 - **Roles**: `manager`, `developer`, `senior_developer`
-- **Middleware** (`middleware.ts`): route protection + role-based redirects
+- **Middleware** (`proxy.ts`, NOT `middleware.ts`): route protection + role-based redirects
   - Manager → `/` (project dashboard); tries `/dev` → redirected to `/`
   - Developer/Senior Dev → `/dev`; tries `/` or `/projects` → redirected to `/dev`
   - Unauthenticated → `/login`
@@ -55,8 +55,11 @@ app/
     projects/[id]/tasks/  GET/POST
     projects/[id]/risks/  GET/POST
     projects/[id]/report/ GET → WeeklyReport JSON
+    projects/[id]/members/ GET/POST/DELETE — project membership
     tasks/[id]/           GET/PUT/DELETE
+    tasks/[id]/review/    POST (submit) | PATCH (approve/reject/reopen)
     risks/[id]/           GET/PUT/DELETE
+    reviews/              GET → IN_REVIEW queue (senior dev scoped to their projects, manager sees all)
     seed/                 POST → re-seeds demo data
 
 components/

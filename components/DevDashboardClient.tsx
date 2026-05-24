@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,10 +13,24 @@ import {
   Layers,
   ChevronRight,
   AlertTriangle,
+  SendHorizonal,
+  XCircle,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn, STATUS_CONFIG, PRIORITY_CONFIG, formatDate, daysFromNow } from "@/lib/utils";
 import type { TokenPayload } from "@/lib/roles";
+import { SubmitReviewModal } from "./SubmitReviewModal";
+import { ReviewQueueSection } from "./ReviewQueueSection";
 import { toast } from "sonner";
+
+type ReviewTask = {
+  id: string;
+  title: string;
+  workSummary: string | null;
+  submittedForReviewAt: string | Date | null;
+  project: { id: string; name: string };
+  assignedTo: { id: string; fullName: string; initials: string } | null;
+};
 
 type AssignedTask = {
   id: string;
@@ -26,6 +41,10 @@ type AssignedTask = {
   startDate: string | Date;
   endDate: string | Date;
   completedAt: string | Date | null;
+  reviewStatus: string | null;
+  workSummary: string | null;
+  rejectionReason: string | null;
+  assignedToId: string | null;
   project: {
     id: string;
     name: string;
@@ -37,31 +56,34 @@ type AssignedTask = {
 interface DevDashboardClientProps {
   user: TokenPayload;
   tasks: AssignedTask[];
+  reviewQueue?: ReviewTask[];
 }
 
-const STATUS_ICONS: Record<string, React.ElementType> = {
-  DONE: CheckCircle2,
-  IN_PROGRESS: Clock,
-  BLOCKED: AlertCircle,
-  TODO: Minus,
-};
+const STATUS_ORDER = ["IN_REVIEW", "IN_PROGRESS", "BLOCKED", "TODO", "DONE"];
 
-const STATUS_ORDER = ["IN_PROGRESS", "BLOCKED", "TODO", "DONE"];
-
-export function DevDashboardClient({ user, tasks }: DevDashboardClientProps) {
+export function DevDashboardClient({
+  user,
+  tasks: initialTasks,
+  reviewQueue = [],
+}: DevDashboardClientProps) {
   const router = useRouter();
+  const [tasks, setTasks] = useState<AssignedTask[]>(initialTasks);
+  const [submitForTask, setSubmitForTask] = useState<AssignedTask | null>(null);
+
+  const isSeniorDev = user.role === "senior_developer";
 
   const sorted = [...tasks].sort(
     (a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
   );
 
-  // Stats
   const total = tasks.length;
   const done = tasks.filter((t) => t.status === "DONE").length;
   const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS").length;
+  const inReview = tasks.filter((t) => t.status === "IN_REVIEW").length;
   const blocked = tasks.filter((t) => t.status === "BLOCKED").length;
+  const rejected = tasks.filter((t) => t.reviewStatus === "REJECTED").length;
   const overdue = tasks.filter(
-    (t) => t.status !== "DONE" && daysFromNow(t.endDate) < 0
+    (t) => t.status !== "DONE" && t.status !== "IN_REVIEW" && daysFromNow(t.endDate) < 0
   ).length;
 
   async function handleStatusChange(taskId: string, newStatus: string) {
@@ -74,141 +96,267 @@ export function DevDashboardClient({ user, tasks }: DevDashboardClientProps) {
       toast.error("Failed to update status");
       return;
     }
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: newStatus, reviewStatus: null, rejectionReason: null }
+          : t
+      )
+    );
+    router.refresh();
+  }
+
+  function handleReviewSubmitted() {
+    setSubmitForTask(null);
     router.refresh();
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-2.5 mb-1">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow shadow-violet-200">
-          <Zap className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-        </div>
-        <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-          Hey, {user.fullName.split(" ")[0]}.
-        </h1>
-      </div>
-      <p className="text-sm text-slate-500 ml-9 mb-8">
-        Here are all the tasks currently assigned to you.
-      </p>
-
-      {/* Stat row */}
-      <div className="grid grid-cols-4 gap-3 mb-8">
-        <StatCard label="Total tasks" value={total} icon={Layers} color="text-slate-700" />
-        <StatCard label="In progress" value={inProgress} icon={Clock} color="text-blue-600" />
-        <StatCard label="Blocked" value={blocked} icon={AlertCircle} color="text-red-500" />
-        <StatCard
-          label={overdue > 0 ? "Overdue" : "Completed"}
-          value={overdue > 0 ? overdue : done}
-          icon={overdue > 0 ? AlertTriangle : CheckCircle2}
-          color={overdue > 0 ? "text-red-500" : "text-emerald-600"}
-        />
-      </div>
-
-      {/* Task list */}
-      {sorted.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="w-7 h-7 text-violet-400" />
+      <div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow shadow-violet-200">
+            <Zap className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
           </div>
-          <h2 className="text-base font-semibold text-slate-700 mb-1">No tasks yet</h2>
-          <p className="text-sm text-slate-400 max-w-xs mx-auto">
-            A manager will assign tasks to you from the project workspace.
-          </p>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            Hey, {user.fullName.split(" ")[0]}.
+          </h1>
         </div>
-      ) : (
-        <div className="space-y-2">
-          {sorted.map((task) => {
-            const statusCfg = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG];
-            const priorityCfg = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG];
-            const isOverdue = task.status !== "DONE" && daysFromNow(task.endDate) < 0;
-            const days = daysFromNow(task.endDate);
-            const dueSoon = !isOverdue && days >= 0 && days <= 3 && task.status !== "DONE";
-            const StatusIcon = STATUS_ICONS[task.status] ?? Minus;
+        <p className="text-sm text-slate-500 ml-9">
+          {isSeniorDev ? "Your tasks and review queue." : "Here are all the tasks currently assigned to you."}
+        </p>
+      </div>
 
-            return (
-              <div
-                key={task.id}
-                className={cn(
-                  "bg-white rounded-xl border border-slate-200/80 shadow-sm px-5 py-4 flex items-start gap-4",
-                  isOverdue && "border-red-200 bg-red-50/30"
-                )}
-              >
-                {/* Status icon */}
-                <div
-                  className={cn(
-                    "mt-0.5 shrink-0",
-                    task.status === "DONE" && "text-emerald-500",
-                    task.status === "IN_PROGRESS" && "text-blue-500",
-                    task.status === "BLOCKED" && "text-red-500",
-                    task.status === "TODO" && "text-slate-300"
-                  )}
-                >
-                  <StatusIcon className="w-4 h-4" />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="font-medium text-slate-900 text-sm">{task.title}</span>
-                    <span className={cn("text-[11px] px-1.5 py-0.5 rounded font-medium border", priorityCfg.color)}>
-                      {priorityCfg.label}
-                    </span>
-                    {isOverdue && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">
-                        <AlertTriangle className="w-3 h-3" />
-                        Overdue
-                      </span>
-                    )}
-                    {dueSoon && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-full">
-                        <Clock className="w-3 h-3" />
-                        Due soon
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <Link
-                      href={`/projects/${task.project.id}`}
-                      className="hover:text-violet-600 transition-colors font-medium flex items-center gap-1"
-                    >
-                      {task.project.name}
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                    <span className="flex items-center gap-1">
-                      <CalendarClock className="w-3 h-3" />
-                      Due {formatDate(task.endDate)}
-                    </span>
-                  </div>
-                  {task.description && (
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-1">{task.description}</p>
-                  )}
-                </div>
-
-                {/* Status changer */}
-                <div className="shrink-0">
-                  <select
-                    value={task.status}
-                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                    className={cn(
-                      "text-xs rounded-lg border px-2 py-1 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-200 appearance-none",
-                      statusCfg.color
-                    )}
-                  >
-                    <option value="TODO">To Do</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="BLOCKED">Blocked</option>
-                    <option value="DONE">Done</option>
-                  </select>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* ── REVIEW QUEUE (senior dev only) ── */}
+      {isSeniorDev && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <ClipboardCheck className="w-4 h-4 text-purple-600" />
+            <h2 className="text-sm font-semibold text-slate-800">Review Queue</h2>
+            {reviewQueue.length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center">
+                {reviewQueue.length}
+              </span>
+            )}
+          </div>
+          <ReviewQueueSection initialTasks={reviewQueue} />
+        </section>
       )}
 
+      {/* ── MY TASKS ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-slate-800 mb-4">My Tasks</h2>
+
+        {/* Stat row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label="Total" value={total} icon={Layers} color="text-slate-700" />
+          <StatCard label="In Progress" value={inProgress} icon={Clock} color="text-blue-600" />
+          {inReview > 0 ? (
+            <StatCard label="In Review" value={inReview} icon={ClipboardCheck} color="text-purple-600" />
+          ) : rejected > 0 ? (
+            <StatCard label="Rejected" value={rejected} icon={XCircle} color="text-red-500" />
+          ) : (
+            <StatCard label="Blocked" value={blocked} icon={AlertCircle} color="text-red-500" />
+          )}
+          <StatCard
+            label={overdue > 0 ? "Overdue" : "Completed"}
+            value={overdue > 0 ? overdue : done}
+            icon={overdue > 0 ? AlertTriangle : CheckCircle2}
+            color={overdue > 0 ? "text-red-500" : "text-emerald-600"}
+          />
+        </div>
+
+        {sorted.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-16 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center mx-auto mb-5">
+              <CheckCircle2 className="w-7 h-7 text-violet-400" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-700 mb-1">No tasks yet</h2>
+            <p className="text-sm text-slate-400 max-w-xs mx-auto">
+              A manager will assign tasks to you from the project workspace.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sorted.map((task) => {
+              const statusCfg = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG];
+              const priorityCfg = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG];
+              const isOverdue =
+                task.status !== "DONE" &&
+                task.status !== "IN_REVIEW" &&
+                daysFromNow(task.endDate) < 0;
+              const days = daysFromNow(task.endDate);
+              const dueSoon =
+                !isOverdue &&
+                days >= 0 &&
+                days <= 3 &&
+                task.status !== "DONE" &&
+                task.status !== "IN_REVIEW";
+              const isInReview = task.status === "IN_REVIEW";
+              const isRejected = task.reviewStatus === "REJECTED";
+              const isDone = task.status === "DONE";
+
+              return (
+                <div
+                  key={task.id}
+                  className={cn(
+                    "bg-white rounded-xl border shadow-sm px-5 py-4",
+                    isInReview
+                      ? "border-purple-200/80 bg-purple-50/20"
+                      : isRejected
+                      ? "border-red-200/80 bg-red-50/20"
+                      : isOverdue
+                      ? "border-red-200/60 bg-red-50/30"
+                      : "border-slate-200/80"
+                  )}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Status icon */}
+                    <div
+                      className={cn(
+                        "mt-0.5 shrink-0",
+                        isDone && "text-emerald-500",
+                        task.status === "IN_PROGRESS" && !isRejected && "text-blue-500",
+                        isInReview && "text-purple-500",
+                        task.status === "BLOCKED" && "text-red-500",
+                        task.status === "TODO" && "text-slate-300",
+                        isRejected && "text-red-500"
+                      )}
+                    >
+                      {isInReview ? (
+                        <ClipboardCheck className="w-4 h-4" />
+                      ) : isDone ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : isRejected ? (
+                        <XCircle className="w-4 h-4" />
+                      ) : task.status === "BLOCKED" ? (
+                        <AlertCircle className="w-4 h-4" />
+                      ) : task.status === "IN_PROGRESS" ? (
+                        <Clock className="w-4 h-4" />
+                      ) : (
+                        <Minus className="w-4 h-4" />
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="font-medium text-slate-900 text-sm">{task.title}</span>
+                        <span
+                          className={cn(
+                            "text-[11px] px-1.5 py-0.5 rounded font-medium border",
+                            priorityCfg.color
+                          )}
+                        >
+                          {priorityCfg.label}
+                        </span>
+                        {isInReview && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-purple-700 bg-purple-100 border border-purple-200 px-1.5 py-0.5 rounded-full font-medium">
+                            <ClipboardCheck className="w-3 h-3" />
+                            Awaiting Review
+                          </span>
+                        )}
+                        {isRejected && !isInReview && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
+                            <XCircle className="w-3 h-3" />
+                            Rejected
+                          </span>
+                        )}
+                        {isOverdue && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">
+                            <AlertTriangle className="w-3 h-3" />
+                            Overdue
+                          </span>
+                        )}
+                        {dueSoon && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-full">
+                            <Clock className="w-3 h-3" />
+                            Due soon
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mb-1">
+                        <Link
+                          href={`/projects/${task.project.id}`}
+                          className="hover:text-violet-600 transition-colors font-medium flex items-center gap-1"
+                          onClick={(e) => e.preventDefault()} // devs can't access /projects
+                          title={task.project.name}
+                        >
+                          {task.project.name}
+                        </Link>
+                        <span className="flex items-center gap-1">
+                          <CalendarClock className="w-3 h-3" />
+                          Due {formatDate(task.endDate)}
+                        </span>
+                      </div>
+
+                      {task.description && (
+                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                          {task.description}
+                        </p>
+                      )}
+
+                      {/* Rejection reason */}
+                      {isRejected && task.rejectionReason && (
+                        <div className="mt-2.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                          <p className="text-xs font-semibold text-red-700 mb-0.5">
+                            Rejection feedback:
+                          </p>
+                          <p className="text-xs text-red-700">{task.rejectionReason}</p>
+                        </div>
+                      )}
+
+                      {/* Submit for review button (only when IN_PROGRESS and assigned to this user) */}
+                      {task.status === "IN_PROGRESS" && (
+                        <button
+                          onClick={() => setSubmitForTask(task)}
+                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                        >
+                          <SendHorizonal className="w-3.5 h-3.5" />
+                          Submit for Review
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Status changer — hidden for IN_REVIEW and DONE */}
+                    {!isInReview && !isDone && (
+                      <div className="shrink-0">
+                        <select
+                          value={task.status}
+                          onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                          className={cn(
+                            "text-xs rounded-lg border px-2 py-1 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-200 appearance-none",
+                            statusCfg?.color ?? "bg-slate-100 text-slate-700 border-slate-200"
+                          )}
+                        >
+                          <option value="TODO">To Do</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="BLOCKED">Blocked</option>
+                        </select>
+                      </div>
+                    )}
+                    {(isInReview || isDone) && (
+                      <span
+                        className={cn(
+                          "shrink-0 text-xs rounded-lg border px-2 py-1 font-medium",
+                          statusCfg?.color ?? "bg-slate-100 text-slate-700 border-slate-200"
+                        )}
+                      >
+                        {STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG]?.label ?? task.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {/* Profile shortcut */}
-      <div className="mt-6 bg-white rounded-xl border border-slate-200/80 shadow-sm">
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm">
         <a
           href="/profile"
           className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 rounded-xl transition-colors"
@@ -225,6 +373,16 @@ export function DevDashboardClient({ user, tasks }: DevDashboardClientProps) {
           <ChevronRight className="w-4 h-4 text-slate-400" />
         </a>
       </div>
+
+      {/* Submit for review modal */}
+      {submitForTask && (
+        <SubmitReviewModal
+          taskTitle={submitForTask.title}
+          taskId={submitForTask.id}
+          onClose={() => setSubmitForTask(null)}
+          onSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 }

@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
+
 const UpdateTaskSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional().nullable(),
-  status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE"]).optional(),
+  status: z.enum(TASK_STATUSES).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
   owner: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
@@ -15,12 +17,12 @@ const UpdateTaskSchema = z.object({
   dependencyIds: z.array(z.string()).optional(),
 });
 
-const TASK_INCLUDE = {
+export const TASK_INCLUDE = {
   dependsOn: { include: { dependency: true } },
   dependedOnBy: { include: { dependent: true } },
-  assignedTo: {
-    select: { id: true, fullName: true, initials: true },
-  },
+  assignedTo: { select: { id: true, fullName: true, initials: true } },
+  reviewedBy: { select: { id: true, fullName: true, initials: true } },
+  activities: { orderBy: { createdAt: "desc" as const }, take: 10 },
 } as const;
 
 export async function GET(
@@ -58,7 +60,7 @@ export async function PUT(
       (taskData as any).completedAt = null;
     }
 
-    // If assignedToId is explicitly provided (even null to unassign), sync owner
+    // If assignedToId explicitly provided, sync owner
     let ownerUpdate: { owner?: string | null; assignedToId?: string | null } = {};
     if (assignedToId !== undefined) {
       if (assignedToId === null || assignedToId === "") {

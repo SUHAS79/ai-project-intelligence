@@ -68,10 +68,31 @@
 - [x] README.md updated with Demo Login table
 - [x] lib/roles.ts (client-safe) + lib/auth.ts (server-only) split to avoid next/headers in client bundles
 
-## 🔜 Feature 2 — Developer Dashboard
-- [ ] My tasks view (tasks assigned to logged-in developer)
-- [ ] Task status update from dev dashboard
-- [ ] Daily task summary
+## ✅ Feature 2 — Developer Dashboard & Task Assignment (Completed)
+- [x] assignedToId FK on Task (nullable, refs User, onDelete: SetNull)
+- [x] Rename "Owner" → "Person" throughout task UI
+- [x] TaskModal: free-text owner replaced with real-user select dropdown
+- [x] API: sync owner string from user.fullName on create/update
+- [x] TasksTab: display assignedTo avatar/name; fall back to legacy owner
+- [x] TeamTab: match tasks by assignedToId first, name fallback for legacy data
+- [x] Real developer dashboard (/dev): assigned tasks, stat row, inline status change
+- [x] Tasks sorted by urgency (IN_PROGRESS > BLOCKED > TODO > DONE)
+
+## ✅ Feature 3 — Ticket Review Workflow (Completed)
+- [x] New task status: IN_REVIEW (TODO → IN_PROGRESS → IN_REVIEW → DONE)
+- [x] TaskActivity model: activity log per task (submitted_for_review, approved, rejected, reopened)
+- [x] Review fields on Task: reviewStatus, workSummary, rejectionReason, reviewedById, reviewedAt, submittedForReviewAt
+- [x] POST /api/tasks/[id]/review — developer submits with work summary
+- [x] PATCH /api/tasks/[id]/review — approve | reject | reopen (senior dev + manager)
+- [x] GET /api/reviews — global IN_REVIEW queue (senior dev: their projects; manager: all)
+- [x] SubmitReviewModal — task name + work summary textarea
+- [x] RejectTaskModal — rejection reason (min 10 chars)
+- [x] ReviewQueueSection — approve/reject with full context (assignee, project, summary)
+- [x] DevDashboardClient: submit for review button on IN_PROGRESS tasks; rejection reason visible; IN_REVIEW badge
+- [x] Senior Dev /dev: Review Queue section with badge count
+- [x] TasksTab: IN_REVIEW filter + banner; approve/reject for manager/senior dev; reopen for manager; activity log expansion
+- [x] STATUS_CONFIG: added IN_REVIEW (purple)
+- [x] Insights: IN_REVIEW excluded from overdue; counted as near-done in momentum score
 
 ## 🔜 Phase 3 — Polish (Deferred)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)

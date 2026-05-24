@@ -28,6 +28,13 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
             assignedTo: {
               select: { id: true, fullName: true, initials: true },
             },
+            reviewedBy: {
+              select: { id: true, fullName: true, initials: true },
+            },
+            activities: {
+              orderBy: { createdAt: "desc" as const },
+              take: 10,
+            },
           },
           orderBy: { startDate: "asc" },
         },
@@ -76,6 +83,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
         members={serializedMembers}
         allUsers={allUsers}
         isManager={tokenUser?.role === "manager"}
+        userRole={tokenUser?.role ?? "manager"}
       />
     </AppShell>
   );
