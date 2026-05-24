@@ -63,6 +63,8 @@ app/
     escalations/          GET (scoped by role) | POST (create escalation)
     escalations/[id]/     PATCH (respond/resolve) | DELETE (creator or manager)
     reports/portfolio/    GET → cross-project portfolio report (manager only, ?period=daily|weekly|monthly)
+    availability/         GET (?month=YYYY-MM, role-scoped) | POST (create entry)
+    availability/[id]/    PATCH (approve/reject, manager) | DELETE (creator or manager)
     seed/                 POST → re-seeds demo data
 
 components/

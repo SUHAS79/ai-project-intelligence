@@ -25,6 +25,21 @@ model User {
   reviewedTasks        Task[]          @relation("TaskReviewer")
   createdEscalations   Escalation[]    @relation("EscalationCreator")
   respondedEscalations Escalation[]    @relation("EscalationResponder")
+  availability         Availability[]
+}
+
+model Availability {
+  id        String  @id @default(cuid())
+  userId    String?                       // null = company-wide holiday
+  startDate String                        // YYYY-MM-DD
+  endDate   String                        // YYYY-MM-DD (same as startDate for single days)
+  type      String  @default("vacation")  // holiday | vacation | sick | wfh | partial
+  note      String?
+  approved  Boolean @default(false)       // auto-approved for sick/wfh/holiday; pending for vacation
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProjectMember {

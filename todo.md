@@ -140,6 +140,23 @@
 - [x] DashboardClient: "Portfolio Report" button in header opens PortfolioReportModal
 - [x] TypeScript: 0 errors, build: passes
 
+## ✅ Feature 7 — Employee Availability/Holiday Calendar (Completed)
+- [x] Availability model: userId (nullable = company holiday), startDate, endDate, type, note, approved
+- [x] Prisma migration: add_availability + User.availability relation
+- [x] Types: holiday (company-wide) | vacation (needs approval) | sick | wfh | partial (auto-approved)
+- [x] GET /api/availability?month=YYYY-MM — manager: all users; dev: own + company holidays
+- [x] POST /api/availability — manager: any user/holiday; dev: own entries only
+- [x] PATCH /api/availability/[id] — manager approves/rejects vacation requests
+- [x] DELETE /api/availability/[id] — creator or manager
+- [x] /availability page — server page with AppShell, fetches current month data
+- [x] AvailabilityCalendar — monthly grid with avatars per day, month navigation, fetch on change
+- [x] Click a day — side panel shows all entries with approve/reject/delete actions
+- [x] AddAvailabilityModal — date range, type radio, note, target user (manager only)
+- [x] Pending approval badge counter for manager
+- [x] Legend (holiday/vacation/sick/wfh/partial + pending indicator)
+- [x] "Calendar" added to MANAGER_NAV and DEV_NAV in Sidebar
+- [x] TypeScript: 0 errors, build: passes
+
 ## 🔜 Phase 3 — Polish (Deferred)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

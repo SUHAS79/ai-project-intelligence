@@ -97,6 +97,16 @@
 - [x] PortfolioReportModal — cross-project summary with health table, stats, AI recs, copy
 - [x] DashboardClient: "Portfolio Report" button in page header
 
+### Feature 7 — Employee Availability/Holiday Calendar ✅ (2026-05-25)
+- [x] Availability model: nullable userId (null = company holiday), startDate/endDate, type, approved
+- [x] Types: holiday | vacation (needs approval) | sick | wfh | partial (auto-approved)
+- [x] GET/POST /api/availability — role-scoped; DELETE/PATCH /api/availability/[id]
+- [x] /availability page — monthly calendar grid accessible to all roles
+- [x] Manager: add company holidays, add entries for any team member, approve/reject vacation requests
+- [x] Developer: request days off (vacation = pending; sick/wfh = instant), see team calendar
+- [x] Calendar: click a day for side panel with all entries and approval actions
+- [x] "Calendar" link added to both manager and developer sidebars
+
 ---
 
 ## Next Priorities (Phase 3)

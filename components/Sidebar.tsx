@@ -10,6 +10,7 @@ import {
   User,
   LogOut,
   ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type TokenPayload } from "@/lib/roles";
@@ -17,15 +18,17 @@ import { useState } from "react";
 
 // Nav items per role
 const MANAGER_NAV = [
-  { href: "/",        label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects",  icon: FolderOpen },
-  { href: "/people",  label: "People",    icon: UserCog },
-  { href: "/profile", label: "Profile",   icon: User },
+  { href: "/",             label: "Dashboard", icon: LayoutDashboard },
+  { href: "/projects",     label: "Projects",  icon: FolderOpen },
+  { href: "/people",       label: "People",    icon: UserCog },
+  { href: "/availability", label: "Calendar",  icon: CalendarDays },
+  { href: "/profile",      label: "Profile",   icon: User },
 ];
 
 const DEV_NAV = [
-  { href: "/dev",     label: "My Dashboard", icon: LayoutDashboard },
-  { href: "/profile", label: "Profile",      icon: User },
+  { href: "/dev",          label: "My Dashboard", icon: LayoutDashboard },
+  { href: "/availability", label: "Calendar",     icon: CalendarDays },
+  { href: "/profile",      label: "Profile",      icon: User },
 ];
 
 interface SidebarProps {
