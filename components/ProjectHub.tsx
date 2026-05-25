@@ -40,6 +40,7 @@ import {
   Siren,
   History,
   Layers,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -205,6 +206,16 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
               </span>
               <span className="text-[10px] text-slate-400 uppercase tracking-wide">Health</span>
             </div>
+            {/* Export .ics — available to all roles */}
+            <a
+              href={`/api/projects/${project.id}/export/ics`}
+              download
+              title="Download project tasks as a .ics calendar file"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors whitespace-nowrap"
+            >
+              <Download className="w-3 h-3" />
+              <span className="hidden sm:inline">Export .ics</span>
+            </a>
             {isManager && (
               <Button
                 variant="outline"

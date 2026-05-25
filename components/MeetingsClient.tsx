@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Video, Plus, ExternalLink, Trash2, Clock, CheckCircle2,
-  Calendar, Copy, Users, User,
+  Calendar, Copy, Users, User, CalendarPlus, Download,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -255,6 +255,22 @@ function Section({
   );
 }
 
+/** Build a Google Calendar "Add event" URL for a meeting */
+function buildGCalUrl(meeting: Meeting): string | null {
+  if (!meeting.scheduledAt) return null;
+  const start = new Date(meeting.scheduledAt);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const fmt = (d: Date) =>
+    d.toISOString().replace(/[-:.]/g, "").replace("000Z", "Z");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: meeting.title,
+    dates: `${fmt(start)}/${fmt(end)}`,
+  });
+  if (meeting.project) params.set("details", `Project: ${meeting.project.name}`);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 function MeetingCard({
   meeting,
   canDelete,
@@ -275,6 +291,7 @@ function MeetingCard({
   const status = STATUS_CONFIG[meeting.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.scheduled;
   const jitsiUrl = `https://meet.jit.si/${meeting.roomName}`;
   const isIndividual = meeting.meetingType === "individual";
+  const gcalUrl = buildGCalUrl(meeting);
 
   return (
     <div className={cn(
@@ -375,6 +392,28 @@ function MeetingCard({
         >
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
+        {/* Calendar export buttons — only shown when a scheduled time exists */}
+        {gcalUrl && (
+          <a
+            href={gcalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Add to Google Calendar"
+            className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
+          >
+            <CalendarPlus className="w-3.5 h-3.5" />
+          </a>
+        )}
+        {meeting.scheduledAt && (
+          <a
+            href={`/api/meetings/${meeting.id}/ics`}
+            download
+            title="Download .ics calendar file"
+            className="p-1.5 rounded-lg hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </a>
+        )}
         {canDelete && (
           <button
             onClick={onDelete}
