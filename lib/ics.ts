@@ -45,7 +45,8 @@ function fmtDate(d: Date): string {
 
 /** YYYYMMDDTHHmmssZ — for timed event datetime values */
 function fmtDateTime(d: Date): string {
-  return d.toISOString().replace(/[-:.]/g, "").replace("000Z", "Z");
+  // Remove dashes and colons, then strip the .mmm milliseconds before Z
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 }
 
 /** Escape special ICS chars in text fields */
@@ -140,7 +141,7 @@ export function buildGoogleCalendarUrl(opts: {
   description?: string;
   location?: string;
 }): string {
-  const fmt = (d: Date) => d.toISOString().replace(/[-:.]/g, "").replace("000Z", "Z");
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: opts.title,
