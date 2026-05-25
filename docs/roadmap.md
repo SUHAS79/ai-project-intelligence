@@ -289,6 +289,18 @@
 - [x] `ChatTab.tsx`: split `fetchError` / `sendError` states; 403 shows "You are not a member of this project's chat." with AlertCircle icon; compose input disabled when fetch fails
 - [x] 0 TypeScript errors; dev server started clean
 
+### Feature 16 — SLA Timers for Reviews and Escalations ✅ (2026-05-25)
+- [x] `SLABadge` component — reusable elapsed-time badge with 3 urgency levels: OK (green) / Warning (amber) / Overdue (red)
+- [x] Review SLA thresholds (from `submittedForReviewAt`): OK < 24h · Warning 24–72h · Overdue > 72h
+- [x] Escalation SLA thresholds (from `createdAt`): OK < 4h · Warning 4–24h · Overdue > 24h
+- [x] Badge integrated in `TasksTab` — appears next to "In Review" chip on IN_REVIEW tasks; shows "Waiting Xh/Xd" with color-coded urgency
+- [x] Badge integrated in `ReviewQueueSection` — displayed top-right of each review card (stacked under the "In Review" badge)
+- [x] Badge integrated in `DevDashboardClient` task list — appears next to "Awaiting Review" chip for IN_REVIEW tasks on dev dashboard
+- [x] Badge integrated in `EscalationsSection` — shown on OPEN and RESPONDED escalation cards next to status badge
+- [x] `submittedForReviewAt` added to `AssignedTask` type in DevDashboardClient (was missing — TypeScript error)
+- [x] No schema changes — uses existing `submittedForReviewAt` (Task) and `createdAt` (Escalation)
+- [x] 0 TypeScript errors
+
 ---
 
 ## Next Priorities (Phase 3)

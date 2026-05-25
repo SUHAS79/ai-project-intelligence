@@ -89,6 +89,7 @@ components/
   EscalateModal.tsx       Developer/senior sends escalation (task context + message + target)
   RespondEscalationModal.tsx  Manager/senior dev responds or resolves an escalation
   EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards); has "Thread" button per escalation if task attached
+  SLABadge.tsx            Reusable elapsed-time urgency badge — type "review" (OK<24h, Warn 24-72h, Overdue>72h) or "escalation" (OK<4h, Warn 4-24h, Overdue>24h)
   TaskCommentThread.tsx   Modal dialog for per-task comment thread (Feature C)
   PortfolioReportModal.tsx  Manager-only cross-project report modal (period toggle, health table, copy)
   MeetingsClient.tsx      Meeting list with Live Now/Scheduled/Past sections + Instant Meeting CTA

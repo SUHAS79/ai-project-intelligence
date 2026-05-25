@@ -402,6 +402,18 @@
 - [x] `components/tabs/ChatTab.tsx`: separate `fetchError` + `sendError` states; 403 → "You are not a member of this project's chat."; AlertCircle icon on fetch error; compose disabled when access denied
 - [x] 0 TypeScript errors confirmed; server restarted clean
 
+## ✅ Feature 16 — SLA Timers for Reviews and Escalations (Completed 2026-05-25)
+- [x] `components/SLABadge.tsx` — reusable elapsed-time badge; OK/Warning/Overdue urgency levels; two SLA types: `review` and `escalation`
+- [x] Review SLA (from `submittedForReviewAt`): OK < 24h · Warning 24–72h · Overdue > 72h (amber/red color + icon escalation)
+- [x] Escalation SLA (from `createdAt`): OK < 4h · Warning 4–24h · Overdue > 24h
+- [x] SLA badge added to `TasksTab` — next to "In Review" chip on every IN_REVIEW task row
+- [x] SLA badge added to `ReviewQueueSection` — stacked under "In Review" badge in card top-right
+- [x] SLA badge added to `DevDashboardClient` task list — next to "Awaiting Review" chip for IN_REVIEW tasks
+- [x] SLA badge added to `EscalationsSection` — shown on OPEN and RESPONDED escalation cards
+- [x] `AssignedTask` type in DevDashboardClient extended with `submittedForReviewAt` field (TypeScript fix)
+- [x] No schema changes needed — uses existing fields
+- [x] 0 TypeScript errors; commit: 5792df9
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)
