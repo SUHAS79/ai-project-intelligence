@@ -4,6 +4,7 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import type { TokenPayload } from "@/lib/roles";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { GlobalSearch } from "./GlobalSearch";
 
 interface AppShellClientProps {
   user: TokenPayload | null;
@@ -39,6 +40,18 @@ export function AppShellClient({ user, children }: AppShellClientProps) {
           </button>
           <span className="text-sm font-bold text-white tracking-tight flex-1">NAMO</span>
           {user && (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("namo:search:open"))}
+              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Search"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="8" />
+                <path strokeLinecap="round" d="m21 21-4.35-4.35" />
+              </svg>
+            </button>
+          )}
+          {user && (
             <NotificationsDropdown placement="topbar" />
           )}
         </div>
@@ -47,6 +60,9 @@ export function AppShellClient({ user, children }: AppShellClientProps) {
           {children}
         </main>
       </div>
+
+      {/* Global search palette — rendered once at shell level */}
+      {user && <GlobalSearch />}
     </div>
   );
 }

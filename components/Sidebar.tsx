@@ -13,6 +13,7 @@ import {
   CalendarDays,
   BarChart3,
   Video,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type TokenPayload } from "@/lib/roles";
@@ -103,6 +104,20 @@ export default function Sidebar({ user, isOpen = false, onClose }: SidebarProps)
             </button>
           )}
         </div>
+      </div>
+
+      {/* Search trigger */}
+      <div className="px-3 pt-3 pb-1">
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("namo:search:open"))}
+          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-500 hover:text-slate-300 transition-all duration-150"
+        >
+          <Search className="w-3.5 h-3.5 shrink-0" />
+          <span className="flex-1 text-left text-[12px]">Search…</span>
+          <kbd className="text-[9px] bg-white/5 text-slate-600 px-1 py-0.5 rounded font-mono border border-white/[0.08] leading-none">
+            ⌘K
+          </kbd>
+        </button>
       </div>
 
       {/* Navigation */}
