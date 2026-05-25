@@ -30,27 +30,32 @@ This is a full-stack AI-powered project management app built with Next.js, SQLit
   - Unauthenticated → `/login`
 - **Auth lib split**: `lib/roles.ts` (client-safe types & constants) + `lib/auth.ts` (server-only, uses next/headers)
 - **Demo accounts** (created by `npm run seed`):
-  - Manager: sarah@namo.dev / manager123
-  - Senior Dev: alex@namo.dev / senior123
-  - Developer: emma@namo.dev / dev123
+  - Managers: sarah@namo.dev / manager123 · marcus@namo.dev / manager123 · rachel@namo.dev / manager123
+  - Senior Devs: alex@namo.dev / senior123 · nina@namo.dev / senior123 · carlos@namo.dev / senior123 · priya@namo.dev / senior123 · jordan@namo.dev / senior123 · yuki@namo.dev / senior123
+  - Developers: emma@namo.dev / dev123 · james@namo.dev / dev123 · maria@namo.dev / dev123 · lisa@namo.dev / dev123 · david@namo.dev / dev123 · sophie@namo.dev / dev123 · tyler@namo.dev / dev123 · aisha@namo.dev / dev123 · ben@namo.dev / dev123 · zoe@namo.dev / dev123
 
 ## Architecture
 
 ```
 app/
   layout.tsx              Root layout (no AppShell here — each page wraps itself)
-  login/page.tsx          Standalone login page (no sidebar)
+  login/page.tsx          Standalone login page (accordion demo accounts for all 19 users)
   page.tsx                Manager dashboard (server, force-dynamic)
-  dev/page.tsx            Developer dashboard placeholder (Feature 2)
-  team/page.tsx           Manager-only team management
+  dev/page.tsx            Developer dashboard (server, force-dynamic)
+  team/page.tsx           [DEPRECATED — replaced by /people]
+  people/page.tsx         Manager-only people management (fetches users + memberships + projects)
   profile/page.tsx        Profile + password change (all roles)
   projects/[id]/page.tsx  Project hub (server, awaits params, fetches project+insights)
+  workload/page.tsx       Manager-only team capacity view
+  meetings/page.tsx       Meeting list + Jitsi join — all authenticated roles
+  availability/page.tsx   Availability/holiday calendar — all authenticated roles
   api/
     auth/login/           POST → issues JWT cookie
     auth/logout/          POST → clears JWT cookie
     auth/me/              GET → current user | PATCH → change password
     users/                GET list | POST create (manager only)
     users/[id]/           PATCH → update role/status (manager only)
+    users/[id]/projects/  GET → user's project memberships | PUT → sync memberships (manager only)
     projects/             GET/POST list, GET/PUT/DELETE by id
     projects/[id]/tasks/  GET/POST
     projects/[id]/risks/  GET/POST
@@ -67,9 +72,6 @@ app/
     availability/[id]/    PATCH (approve/reject, manager) | DELETE (creator or manager)
     meetings/             GET (all, team-wide) | POST (create, auto-generates roomName)
     meetings/[id]/        PATCH (update status) | DELETE (creator or manager)
-
-  /workload               Manager-only: team capacity view (proxy.ts isManagerOnlyPath)
-  /meetings               Meeting list + Jitsi join — all authenticated roles
     seed/                 POST → re-seeds demo data
 
 components/
@@ -88,6 +90,8 @@ components/
   MeetingsClient.tsx      Meeting list with Live Now/Scheduled/Past sections + Instant Meeting CTA
   CreateMeetingModal.tsx  Create meeting form (title, optional project, optional scheduled time)
   MeetingRoom.tsx         Full-screen Jitsi iFrame overlay; loads external_api.js dynamically
+  PeopleManagement.tsx    Manager people table: sort/search/filter, Assigned Projects column, AssignProjectModal inline
+  EmployeeModal.tsx       Create/edit employee modal
   HealthScore.tsx         Visual health score gauge component
   tabs/
     TasksTab.tsx          Task table with inline status select, filter pills
@@ -108,7 +112,7 @@ lib/
 
 prisma/
   schema.prisma           DB schema (Prisma v7 syntax)
-  seed.ts                 Demo data seeder (3 projects, 24 tasks, 6 risks)
+  seed.ts                 Demo data seeder (19 users, 3 projects, 30 tasks, 36 deps, 18 activities, 8 risks, 6 escalations, 15 availability, 7 meetings)
   migrations/             Auto-generated migration files
 ```
 
@@ -156,6 +160,41 @@ const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
 return new PrismaClient({ adapter } as any);
 ```
 
+### Serializing dates from server → client components
+Server components must convert Prisma `Date` objects to ISO strings before passing to client components.
+`parseISO()` from date-fns expects a string — passing a Date object causes a runtime crash.
+```ts
+// CORRECT — in meetings/page.tsx:
+const meetings = meetingsRaw.map((m) => ({
+  ...m,
+  scheduledAt: m.scheduledAt?.toISOString() ?? null,
+  createdAt: m.createdAt.toISOString(),
+}));
+
+// WRONG — Date objects break parseISO() in client:
+<MeetingsClient initialMeetings={meetings as any} />
+```
+
+### Project membership API (user-centric)
+`GET /api/users/[id]/projects` — returns list of projects the user is a member of
+`PUT /api/users/[id]/projects` — body: `{ projectIds: string[] }` — diffs and syncs memberships atomically
+```ts
+// Diff + transaction pattern in /api/users/[id]/projects/route.ts:
+const toAdd = projectIds.filter((pid) => !currentIds.has(pid));
+const toRemove = [...currentIds].filter((pid) => !newIds.has(pid));
+await prisma.$transaction([
+  prisma.projectMember.deleteMany({ where: { userId: id, projectId: { in: toRemove } } }),
+  ...toAdd.map((projectId) => prisma.projectMember.create({ data: { projectId, userId: id } })),
+]);
+```
+
+### PeopleManagement type split
+`EmployeeModal` returns a `BaseEmployee` (no project fields). `PeopleManagement` extends it with `projects: Project[]`.
+Always preserve existing projects when EmployeeModal fires `onSuccess`:
+```ts
+copy[idx] = { ...updated, projects: copy[idx]?.projects ?? [] };
+```
+
 ### Insights engine
 `lib/insights.ts` exports `computeInsights(tasks, risks)` → `ProjectInsights`:
 - Health score 0–100 (≥70 Healthy, ≥40 At Risk, <40 Critical)
@@ -180,12 +219,54 @@ return new PrismaClient({ adapter } as any);
 - **Card style**: `bg-white rounded-xl border border-slate-200/80 shadow-sm`
 - **Health colors**: Emerald (healthy) / Amber (at risk) / Red (critical)
 - **Severity dots**: Red-500 / Orange-400 / Amber-400 / Slate-300
+- **Project assignment chips**: Indigo-50 bg / Indigo-700 text / Indigo-100 border
 
 ## File Naming Conventions
 - Components: PascalCase, `.tsx`
 - Lib functions: camelCase, `.ts`
 - API routes: `route.ts` in Next.js convention
 - All imports use `@/` alias (maps to project root)
+
+## Seed Data (as of 2026-05-25)
+
+19 users across 3 roles:
+- **3 Managers**: Sarah Mitchell, Marcus Johnson, Rachel Chen (each leads one project)
+- **6 Senior Devs**: Alex Rivera, Nina Volkov, Carlos Mendez, Priya Patel, Jordan Walsh, Yuki Tanaka
+- **10 Developers**: Emma Wilson, James Kim, Maria Santos, Lisa Tran, David Park, Sophie Brown, Tyler Wright, Aisha Okafor, Ben Carter, Zoe Adams
+
+3 projects with dedicated manager ownership + ProjectMember assignments:
+1. **Mobile App Launch Q3** — Sarah leads; Alex+Nina senior; Emma/James/Maria/Lisa/David devs
+2. **Data Platform Migration** — Marcus leads; Carlos+Priya senior; Sophie/Tyler/Aisha devs
+3. **Internal Dashboard Redesign** — Rachel leads; Jordan+Yuki senior; Emma/Ben/Zoe devs (Emma is cross-project)
+
+30 tasks in mixed states demonstrating full workflow:
+- DONE/APPROVED (7): include workSummary, reviewedById, actualHours
+- IN_REVIEW/PENDING (3): submitted, awaiting senior dev or manager approval
+- IN_PROGRESS (4): includes one rejected task with rejectionReason visible
+- BLOCKED (1): Android onboarding blocked on design assets (overdue)
+- TODO (15): upcoming work with estimatedHours
+
+Other seed data:
+- 36 task dependencies (realistic DAG per project)
+- 18 TaskActivity records (submitted_for_review + approved/rejected audit trail)
+- 8 risks across projects (OPEN + MITIGATING)
+- 6 escalations (OPEN / RESPONDED / RESOLVED — covering all roles)
+- 15 availability entries (company holidays, approved/pending vacations, sick, WFH, partial)
+- 7 meetings (5 scheduled, 2 ended; project-linked + general)
+
+Seed cleanup order (safe for all FK constraints):
+```ts
+await prisma.taskActivity.deleteMany();
+await prisma.taskDependency.deleteMany();
+await prisma.escalation.deleteMany();
+await prisma.task.deleteMany();
+await prisma.risk.deleteMany();
+await prisma.availability.deleteMany();
+await prisma.meeting.deleteMany();
+await prisma.projectMember.deleteMany();
+await prisma.project.deleteMany();
+await prisma.user.deleteMany();
+```
 
 ## Known Limitations (MVP)
 - JWT deactivation lag: if a user is deactivated while logged in, their existing token remains valid until expiry (7 days). Acceptable for MVP.
@@ -219,3 +300,31 @@ return new PrismaClient({ adapter } as any);
 - Sidebar: section label "Menu" → "Navigation" for non-manager roles
 - TeamTab: "No tasks assigned by name in this project." → "No tasks assigned in this project."
 - ProjectCard footer: "Needs attention" and "Open →" grouped right-aligned
+
+## Seed Data Overhaul (completed 2026-05-25)
+- Expanded from 3 users → 19 users (3 managers, 6 senior devs, 10 developers)
+- 3 projects each with a dedicated manager lead and full ProjectMember assignments
+- 30 tasks with assignedToId FK, estimatedHours, actualHours, review workflow fields
+- Review workflow data: DONE/APPROVED tasks have workSummary + reviewedById; IN_REVIEW tasks have PENDING status + submittedForReviewAt; one task shows REJECTED flow with rejectionReason
+- 18 TaskActivity records for audit trail (submitted/approved/rejected)
+- 36 task dependencies for Gantt + critical path rendering
+- 8 risks (OPEN + MITIGATING) across all 3 projects
+- 6 escalations in OPEN/RESPONDED/RESOLVED states covering all role scenarios
+- 15 availability entries: company holidays, approved + pending vacations, sick days, WFH, partial days
+- 7 meetings: scheduled + ended, project-linked and general, correct roomName format
+- Seed cleanup now covers ALL tables (was missing taskActivity, escalation, availability, meeting, projectMember)
+
+## People Page — Project Assignment (completed 2026-05-25)
+- New "Assigned Projects" column in the people table: shows indigo chips per project, or "Unassigned" if none
+- "Projects" action button per employee opens `AssignProjectModal` (inline in PeopleManagement.tsx)
+- `AssignProjectModal`: checkbox-style toggle buttons for all active projects, pre-checked from current memberships
+- Save calls `PUT /api/users/[id]/projects` — atomically diffs and syncs memberships in a single DB transaction
+- Local state updates immediately on save (no page reload)
+- Search now also matches project names
+- People table min-width bumped from 640px → 900px to fit extra column
+- `BaseEmployee` type (no projects, matches EmployeeModal) split from `Employee` type (extends with `projects: Project[]`) to keep TypeScript clean across the component boundary
+
+## Meetings Page — Serialization Fix (completed 2026-05-25)
+- Root cause: Prisma returns `Date` objects; `parseISO()` in `MeetingCard` expects a string
+- Fix: meetings page now explicitly calls `.toISOString()` on all Date fields before passing to client
+- Also: switched to `Promise.all` for parallel fetching of meetings + projects; added `scheduledAt` to orderBy

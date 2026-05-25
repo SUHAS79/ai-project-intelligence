@@ -59,7 +59,7 @@
 - [x] Middleware route protection (manager → /; dev → /dev; unauthenticated → /login)
 - [x] Sidebar: role-based nav (Dashboard/Projects/Team for manager; My Dashboard for devs)
 - [x] Sidebar: user avatar, name, role label, logout button
-- [x] Team management page (/team) — sortable table with role/status badges
+- [x] People management page (/people) — sortable table with role/status badges
 - [x] Employee modal — create (all fields) + edit (role/status only)
 - [x] Deactivate/Reactivate employee (no delete, just status toggle)
 - [x] Developer dashboard placeholder (/dev)
@@ -155,7 +155,6 @@
 - [x] Pending approval badge counter for manager
 - [x] Legend (holiday/vacation/sick/wfh/partial + pending indicator)
 - [x] "Calendar" added to MANAGER_NAV and DEV_NAV in Sidebar
-- [x] TypeScript: 0 errors, build: passes
 
 ## ✅ Feature 8 — Manager Workload View (Completed)
 - [x] /workload page — manager-only, force-dynamic server page
@@ -170,7 +169,6 @@
 - [x] "Off today" badge using Availability data (approved vacation/sick/holiday)
 - [x] Unassigned tasks panel: active tasks with no owner, link to their project
 - [x] "Workload" added to MANAGER_NAV in Sidebar (BarChart3 icon)
-- [x] TypeScript: 0 errors, build: passes
 
 ## ✅ Feature 9 — In-app Meetings via Jitsi (Completed)
 - [x] Meeting model: title, projectId (optional), roomName (unique), scheduledAt, createdById, status
@@ -189,7 +187,6 @@
 - [x] Status badges: Scheduled / Live (animated red dot) / Ended
 - [x] /meetings page — accessible to all roles (manager + developer)
 - [x] "Meetings" added to MANAGER_NAV and DEV_NAV in Sidebar
-- [x] TypeScript: 0 errors, build: passes
 
 ## ✅ Polish Pass v1 (Completed 2026-05-25)
 - [x] Mobile sidebar: hamburger toggle + backdrop overlay on < lg screens (AppShellClient.tsx)
@@ -233,6 +230,49 @@
 - [x] Sidebar section label: "Menu" → "Navigation" for non-manager roles
 - [x] TeamTab no-tasks message: "No tasks assigned by name" → "No tasks assigned in this project."
 - [x] ProjectCard footer: "Needs attention" + "Open →" grouped in right flex container
+
+## ✅ Seed Data Overhaul (Completed 2026-05-25)
+- [x] Expanded from 3 users → 19 users: 3 managers, 6 senior devs, 10 developers
+- [x] All users have realistic names, emails (@namo.dev), initials, lastLogin dates
+- [x] 3 projects each with dedicated manager lead + ProjectMember assignments (some cross-project)
+- [x] 30 tasks across projects with assignedToId FK, estimatedHours, actualHours, mixed statuses
+- [x] DONE/APPROVED tasks: workSummary, reviewedById, reviewedAt, actualHours set
+- [x] IN_REVIEW/PENDING tasks: submittedForReviewAt, workSummary set
+- [x] IN_PROGRESS with rejection: rejectionReason visible, reviewStatus = REJECTED
+- [x] BLOCKED task (overdue): Android onboarding blocked and past deadline
+- [x] 18 TaskActivity records: submitted_for_review + approved/rejected audit trail
+- [x] 36 task dependencies for Gantt + critical path rendering
+- [x] 8 risks across 3 projects (OPEN + MITIGATING, realistic descriptions)
+- [x] 6 escalations: OPEN / RESPONDED / RESOLVED — covering all role scenarios
+- [x] 15 availability entries: 3 company holidays, approved/pending vacations, sick days, WFH, partial
+- [x] 7 meetings: scheduled + ended, project-linked + general, namo-{slug}-{random6} format
+- [x] Seed cleanup now covers ALL 10 tables (was missing taskActivity, escalation, availability, meeting, projectMember)
+
+## ✅ Feature 10 — People Page Project Assignment (Completed 2026-05-25)
+- [x] New "Assigned Projects" column in People table: indigo chips per project, "Unassigned" in italics if none
+- [x] "Projects" action button per row opens AssignProjectModal (inline in PeopleManagement.tsx)
+- [x] AssignProjectModal: large toggle-checkbox buttons per active project, pre-checked from DB
+- [x] Save button calls PUT /api/users/[id]/projects — diffs old vs new, applies in DB transaction
+- [x] Local employee state updates immediately on save (no page reload or router.refresh needed)
+- [x] Search in People table now also matches against project names
+- [x] People table min-width: 640px → 900px to fit the extra column
+- [x] BaseEmployee type (no project fields, matches EmployeeModal.Employee) + Employee extends BaseEmployee with projects[]
+- [x] people/page.tsx: parallel fetches users+memberships+projects via Promise.all
+- [x] New API: GET /api/users/[id]/projects — returns user's project memberships (manager only)
+- [x] New API: PUT /api/users/[id]/projects — body {projectIds[]} — atomically syncs memberships in transaction
+- [x] Updating assignments reflects in project TeamTab + workload view (same DB queries)
+
+## ✅ Meetings Serialization Bug Fix (Completed 2026-05-25)
+- [x] Root cause: Prisma Date objects passed to MeetingsClient as `meetings as any` — parseISO() requires strings → runtime crash
+- [x] Fix: meetings/page.tsx now calls .toISOString() on all Date fields before passing to client component
+- [x] Parallel-fetch meetings + projects via Promise.all for faster page load
+- [x] Added scheduledAt to orderBy for correct chronological display
+
+## ✅ Login Page — All 19 Demo Accounts (Completed 2026-05-25)
+- [x] Replaced 3 flat buttons with grouped collapsible accordion (Managers / Senior Devs / Developers)
+- [x] Password hint shown in each section header so reviewers can see all credentials at a glance
+- [x] Click section header to expand; click any account row to quick-fill email + password
+- [x] Accordion: expanding a section collapses the previously open one
 
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)

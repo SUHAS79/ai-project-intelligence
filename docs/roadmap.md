@@ -158,6 +158,45 @@
 - [x] TeamTab: cleaner "no tasks" message
 - [x] ProjectCard footer: aligned "Needs attention" + "Open →" on the right
 
+### Seed Data Overhaul ✅ (2026-05-25)
+- [x] 19 users: 3 managers, 6 senior devs, 10 developers — all with real emails, initials, lastLogin
+- [x] Preserved original demo accounts (sarah/alex/emma) + added 16 new team members
+- [x] 3 projects, each with dedicated manager lead + full ProjectMember assignments
+- [x] 30 tasks with assignedToId, estimatedHours/actualHours, mixed statuses (DONE/IN_REVIEW/IN_PROGRESS/BLOCKED/TODO)
+- [x] Review workflow data: APPROVED tasks with workSummary; IN_REVIEW with PENDING; rejected task with rejectionReason
+- [x] 18 TaskActivity records capturing submitted/approved/rejected audit trail
+- [x] 36 task dependencies for realistic Gantt + critical path
+- [x] 8 risks across projects (OPEN + MITIGATING)
+- [x] 6 escalations: OPEN / RESPONDED / RESOLVED — covering all role scenarios
+- [x] 15 availability entries: company holidays, approved/pending vacations, sick, WFH, partial days
+- [x] 7 meetings: scheduled + ended, correct roomName format `namo-{slug}-{random6}`
+- [x] Seed cleanup now covers all tables (was missing taskActivity, escalation, availability, meeting, projectMember)
+
+### Feature 10 — People Page Project Assignment ✅ (2026-05-25)
+- [x] New "Assigned Projects" column in People table — indigo chips per project, "Unassigned" if none
+- [x] "Projects" action button per employee opens AssignProjectModal
+- [x] AssignProjectModal: large checkbox-toggle buttons per active project, pre-checked from current memberships
+- [x] GET /api/users/[id]/projects — returns user's current project memberships
+- [x] PUT /api/users/[id]/projects — atomically syncs memberships (diff + transaction)
+- [x] Immediate local state update on save (no page reload)
+- [x] Search in People table now also matches project names
+- [x] Table min-width bumped to 900px for wider column set
+- [x] BaseEmployee / Employee type split keeps TypeScript clean across EmployeeModal boundary
+- [x] people/page.tsx: parallel-fetches users (with memberships) + projects via Promise.all
+- [x] Updating assignments immediately reflects in project TeamTab + workload view (same DB, same queries)
+
+### Meetings Serialization Fix ✅ (2026-05-25)
+- [x] Root cause: Prisma Date objects passed to MeetingsClient; parseISO() expects strings → runtime error
+- [x] Fix: meetings/page.tsx now explicitly .toISOString() all Date fields before passing to client
+- [x] Parallel fetch of meetings + projects with Promise.all
+- [x] Added scheduledAt to orderBy for correct chronological sorting
+
+### Login Page — All Demo Accounts ✅ (2026-05-25)
+- [x] All 19 demo users shown in grouped collapsible accordion sections
+- [x] Sections: Managers (3) / Senior Developers (6) / Developers (10)
+- [x] Password hint shown in section header; click any account to quick-fill email + password
+- [x] Accordion behavior: expanding one section collapses the previous
+
 ---
 
 ## Next Priorities (Phase 3)
@@ -178,7 +217,7 @@
 
 ### P2 — Upgrade Path
 - [x] Role-based auth (Feature 1 — completed)
-- [ ] Multi-user: assign tasks to team members (link Task.owner to User.id)
+- [x] Project-member assignment from People page (Feature 10 — completed)
 - [ ] PostgreSQL support (schema already portable, just swap adapter)
 - [ ] LLM insights: replace heuristics with Claude API for natural language summaries
 - [ ] Vercel deployment pipeline with environment variables
