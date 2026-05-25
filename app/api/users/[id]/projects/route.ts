@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { notifyMany } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 async function requireManager() {
   const payload = await getUserFromToken();
@@ -82,15 +83,33 @@ export async function PUT(
     ),
   ]);
 
-  // Notify user about each newly added project (skip if they added themselves, which managers can't do)
+  // Activity log + notify for each newly added project
   for (const proj of addedProjects) {
+    await logActivity(
+      proj.id, "member", id, user.fullName, "member_added",
+      { id: manager.userId, name: manager.fullName, role: manager.role },
+      `Added ${user.fullName} to the project`
+    );
     await notifyMany(
-      [id],
-      "project_assigned",
-      "Added to a project",
+      [id], "project_assigned", "Added to a project",
       `${manager.fullName} added you to "${proj.name}".`,
       `/projects/${proj.id}`
     );
+  }
+
+  // Also log removals
+  if (toRemove.length > 0) {
+    const removedProjectNames = await prisma.project.findMany({
+      where: { id: { in: toRemove } },
+      select: { id: true, name: true },
+    }).catch(() => [] as { id: string; name: string }[]);
+    for (const proj of removedProjectNames) {
+      await logActivity(
+        proj.id, "member", id, user.fullName, "member_removed",
+        { id: manager.userId, name: manager.fullName, role: manager.role },
+        `Removed ${user.fullName} from the project`
+      );
+    }
   }
 
   // Return updated list

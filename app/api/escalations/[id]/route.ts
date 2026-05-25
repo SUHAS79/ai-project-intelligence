@@ -3,6 +3,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notify } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 const RespondSchema = z.object({
   action: z.enum(["respond", "resolve"]),
@@ -58,6 +59,17 @@ export async function PATCH(
       respondedBy: { select: { id: true, fullName: true, initials: true } },
     },
   });
+
+  // Activity log
+  const escTitle = updated.task ? `Escalation on "${updated.task.title}"` : "Escalation";
+  await logActivity(
+    escalation.projectId, "escalation", id, escTitle,
+    action === "resolve" ? "resolved" : "responded",
+    { id: user.userId, name: user.fullName, role: user.role },
+    action === "resolve"
+      ? `Resolved escalation${updated.task ? ` on "${updated.task.title}"` : ""}`
+      : `Responded to escalation${updated.task ? ` on "${updated.task.title}"` : ""}${response ? `: ${response.slice(0, 80)}${response.length > 80 ? "…" : ""}` : ""}`
+  );
 
   // Notify the escalation creator about the response/resolution
   if (escalation.createdById !== user.userId) {

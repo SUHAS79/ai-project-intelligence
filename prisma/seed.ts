@@ -18,6 +18,7 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // ─── Cleanup (safe dependency order) ────────────────────────────────────────
+  await prisma.activityLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.taskComment.deleteMany();
   await prisma.projectMessage.deleteMany();
@@ -1189,6 +1190,207 @@ async function main() {
     ],
   });
 
+  // ─── Activity Log ─────────────────────────────────────────────────────────
+  // Realistic audit trail entries reflecting events that "would have occurred" based on seed data.
+  console.log("  Seeding activity log...");
+  await prisma.activityLog.createMany({
+    data: [
+      // ── Project 1 — Mobile App Launch Q3 ─────────────────────────────────
+      // Project and team setup
+      {
+        projectId: p1.id, entityType: "member", entityId: alex.id, entityTitle: alex.fullName,
+        action: "member_added", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Added ${alex.fullName} to the project`, createdAt: d(-43),
+      },
+      {
+        projectId: p1.id, entityType: "member", entityId: emma.id, entityTitle: emma.fullName,
+        action: "member_added", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Added ${emma.fullName} to the project`, createdAt: d(-43),
+      },
+      {
+        projectId: p1.id, entityType: "member", entityId: maria.id, entityTitle: maria.fullName,
+        action: "member_added", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Added ${maria.fullName} to the project`, createdAt: d(-43),
+      },
+      // Task: iOS core implementation
+      {
+        projectId: p1.id, entityType: "task", entityId: t1.id, entityTitle: "iOS core feature implementation",
+        action: "created", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Created task "iOS core feature implementation"`, createdAt: d(-40),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t1.id, entityTitle: "iOS core feature implementation",
+        action: "assigned", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Assigned "iOS core feature implementation" to ${alex.fullName}`, createdAt: d(-40),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t1.id, entityTitle: "iOS core feature implementation",
+        action: "status_changed", actorId: alex.id, actorName: alex.fullName, actorRole: alex.role,
+        details: `Changed status of "iOS core feature implementation" from To Do → In Progress`, createdAt: d(-38),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t1.id, entityTitle: "iOS core feature implementation",
+        action: "submitted_for_review", actorId: alex.id, actorName: alex.fullName, actorRole: alex.role,
+        details: `Submitted "iOS core feature implementation" for review`, createdAt: d(-22),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t1.id, entityTitle: "iOS core feature implementation",
+        action: "approved", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Approved "iOS core feature implementation"`, createdAt: d(-21),
+      },
+      // Task: iOS onboarding screens
+      {
+        projectId: p1.id, entityType: "task", entityId: t4.id, entityTitle: "iOS onboarding screens — permissions flow",
+        action: "created", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Created task "iOS onboarding screens — permissions flow"`, createdAt: d(-20),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t4.id, entityTitle: "iOS onboarding screens — permissions flow",
+        action: "assigned", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Assigned "iOS onboarding screens — permissions flow" to ${james.fullName}`, createdAt: d(-20),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t4.id, entityTitle: "iOS onboarding screens — permissions flow",
+        action: "submitted_for_review", actorId: james.id, actorName: james.fullName, actorRole: james.role,
+        details: `Submitted "iOS onboarding screens — permissions flow" for review`, createdAt: d(-4),
+      },
+      {
+        projectId: p1.id, entityType: "task", entityId: t4.id, entityTitle: "iOS onboarding screens — permissions flow",
+        action: "approved", actorId: alex.id, actorName: alex.fullName, actorRole: alex.role,
+        details: `Approved "iOS onboarding screens — permissions flow"`, createdAt: d(-3),
+      },
+      // Task: Android onboarding blocked
+      {
+        projectId: p1.id, entityType: "task", entityId: t5.id, entityTitle: "Android onboarding — welcome screens",
+        action: "status_changed", actorId: maria.id, actorName: maria.fullName, actorRole: maria.role,
+        details: `Changed status of "Android onboarding — welcome screens" from In Progress → Blocked`, createdAt: d(-5),
+      },
+      // Escalation created
+      {
+        projectId: p1.id, entityType: "escalation", entityId: "esc-p1-1", entityTitle: `Escalation on "Android onboarding — welcome screens"`,
+        action: "created", actorId: emma.id, actorName: emma.fullName, actorRole: emma.role,
+        details: `Raised an escalation on "Android onboarding — welcome screens": Blocked for 5 days waiting on design assets...`, createdAt: d(-1),
+      },
+      // Meeting scheduled
+      {
+        projectId: p1.id, entityType: "meeting", entityId: "meeting-sprint-1", entityTitle: "Mobile App Sprint Review",
+        action: "scheduled", actorId: sarah.id, actorName: sarah.fullName, actorRole: sarah.role,
+        details: `Scheduled team meeting "Mobile App Sprint Review"`, createdAt: d(-2),
+      },
+
+      // ── Project 2 — Data Platform Migration ───────────────────────────────
+      {
+        projectId: p2.id, entityType: "member", entityId: carlos.id, entityTitle: carlos.fullName,
+        action: "member_added", actorId: marcus.id, actorName: marcus.fullName, actorRole: marcus.role,
+        details: `Added ${carlos.fullName} to the project`, createdAt: d(-50),
+      },
+      {
+        projectId: p2.id, entityType: "member", entityId: sophie.id, entityTitle: sophie.fullName,
+        action: "member_added", actorId: marcus.id, actorName: marcus.fullName, actorRole: marcus.role,
+        details: `Added ${sophie.fullName} to the project`, createdAt: d(-50),
+      },
+      // Task: ETL batch pipeline
+      {
+        projectId: p2.id, entityType: "task", entityId: dp4.id, entityTitle: "Batch ETL pipeline build",
+        action: "created", actorId: marcus.id, actorName: marcus.fullName, actorRole: marcus.role,
+        details: `Created task "Batch ETL pipeline build"`, createdAt: d(-48),
+      },
+      {
+        projectId: p2.id, entityType: "task", entityId: dp4.id, entityTitle: "Batch ETL pipeline build",
+        action: "assigned", actorId: marcus.id, actorName: marcus.fullName, actorRole: marcus.role,
+        details: `Assigned "Batch ETL pipeline build" to ${aisha.fullName}`, createdAt: d(-48),
+      },
+      {
+        projectId: p2.id, entityType: "task", entityId: dp4.id, entityTitle: "Batch ETL pipeline build",
+        action: "status_changed", actorId: aisha.id, actorName: aisha.fullName, actorRole: aisha.role,
+        details: `Changed status of "Batch ETL pipeline build" from To Do → In Progress`, createdAt: d(-44),
+      },
+      {
+        projectId: p2.id, entityType: "task", entityId: dp4.id, entityTitle: "Batch ETL pipeline build",
+        action: "submitted_for_review", actorId: aisha.id, actorName: aisha.fullName, actorRole: aisha.role,
+        details: `Submitted "Batch ETL pipeline build" for review`, createdAt: d(-8),
+      },
+      {
+        projectId: p2.id, entityType: "task", entityId: dp4.id, entityTitle: "Batch ETL pipeline build",
+        action: "approved", actorId: carlos.id, actorName: carlos.fullName, actorRole: carlos.role,
+        details: `Approved "Batch ETL pipeline build"`, createdAt: d(-7),
+      },
+      // Task: Streaming pipeline
+      {
+        projectId: p2.id, entityType: "task", entityId: dp5.id, entityTitle: "Streaming pipeline setup",
+        action: "assigned", actorId: marcus.id, actorName: marcus.fullName, actorRole: marcus.role,
+        details: `Assigned "Streaming pipeline setup" to ${tyler.fullName}`, createdAt: d(-44),
+      },
+      // Escalation created + resolved
+      {
+        projectId: p2.id, entityType: "escalation", entityId: "esc-p2-1", entityTitle: "Escalation on \"Streaming pipeline setup\"",
+        action: "created", actorId: tyler.id, actorName: tyler.fullName, actorRole: tyler.role,
+        details: `Raised an escalation on "Streaming pipeline setup": Kinesis consumer config is missing IAM role permissions in staging...`, createdAt: d(-9),
+      },
+      {
+        projectId: p2.id, entityType: "escalation", entityId: "esc-p2-1", entityTitle: "Escalation on \"Streaming pipeline setup\"",
+        action: "resolved", actorId: carlos.id, actorName: carlos.fullName, actorRole: carlos.role,
+        details: `Resolved escalation on "Streaming pipeline setup"`, createdAt: d(-7),
+      },
+      // Meeting
+      {
+        projectId: p2.id, entityType: "meeting", entityId: "meeting-p2-standup", entityTitle: "Data Migration Daily Standup",
+        action: "scheduled", actorId: marcus.id, actorName: marcus.fullName, actorRole: marcus.role,
+        details: `Scheduled team meeting "Data Migration Daily Standup"`, createdAt: d(-1),
+      },
+
+      // ── Project 3 — Internal Dashboard Redesign ───────────────────────────
+      {
+        projectId: p3.id, entityType: "member", entityId: jordan.id, entityTitle: jordan.fullName,
+        action: "member_added", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Added ${jordan.fullName} to the project`, createdAt: d(-35),
+      },
+      {
+        projectId: p3.id, entityType: "member", entityId: yuki.id, entityTitle: yuki.fullName,
+        action: "member_added", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Added ${yuki.fullName} to the project`, createdAt: d(-35),
+      },
+      {
+        projectId: p3.id, entityType: "member", entityId: ben.id, entityTitle: ben.fullName,
+        action: "member_added", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Added ${ben.fullName} to the project`, createdAt: d(-35),
+      },
+      // Task: Stakeholder interviews
+      {
+        projectId: p3.id, entityType: "task", entityId: p3t1.id, entityTitle: "Stakeholder interviews and requirements",
+        action: "submitted_for_review", actorId: jordan.id, actorName: jordan.fullName, actorRole: jordan.role,
+        details: `Submitted "Stakeholder interviews and requirements" for review`, createdAt: d(-16),
+      },
+      {
+        projectId: p3.id, entityType: "task", entityId: p3t1.id, entityTitle: "Stakeholder interviews and requirements",
+        action: "approved", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Approved "Stakeholder interviews and requirements"`, createdAt: d(-14),
+      },
+      // Task: Wireframes submitted for review (currently pending)
+      {
+        projectId: p3.id, entityType: "task", entityId: p3t2.id, entityTitle: "Wireframes and design system setup",
+        action: "created", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Created task "Wireframes and design system setup"`, createdAt: d(-14),
+      },
+      {
+        projectId: p3.id, entityType: "task", entityId: p3t2.id, entityTitle: "Wireframes and design system setup",
+        action: "assigned", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Assigned "Wireframes and design system setup" to ${yuki.fullName}`, createdAt: d(-14),
+      },
+      {
+        projectId: p3.id, entityType: "task", entityId: p3t2.id, entityTitle: "Wireframes and design system setup",
+        action: "submitted_for_review", actorId: yuki.id, actorName: yuki.fullName, actorRole: yuki.role,
+        details: `Submitted "Wireframes and design system setup" for review`, createdAt: d(-1),
+      },
+      // Meeting
+      {
+        projectId: p3.id, entityType: "meeting", entityId: "meeting-p3-design", entityTitle: "Dashboard Design Review",
+        action: "scheduled", actorId: rachel.id, actorName: rachel.fullName, actorRole: rachel.role,
+        details: `Scheduled team meeting "Dashboard Design Review"`, createdAt: dt(0, 8),
+      },
+    ],
+  });
+
   // ─── Notifications ────────────────────────────────────────────────────────
   // Realistic notifications reflecting events that "would have happened" based on seed data.
   console.log("  Seeding notifications...");
@@ -1410,6 +1612,7 @@ async function main() {
   console.log(`   • Meetings: 8`);
   console.log(`   • Project chat messages: 14`);
   console.log(`   • Task comments: 9`);
+  console.log(`   • Activity log entries: 36`);
   console.log(`   • Notifications: 21`);
   console.log(``);
   console.log("🔑 Demo login credentials:");

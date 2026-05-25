@@ -3,6 +3,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notify, notifyMany } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 const CreateMeetingSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -95,6 +96,15 @@ export async function POST(req: NextRequest) {
     },
     include: MEETING_INCLUDE,
   });
+
+  // Activity log
+  await logActivity(
+    projectId, "meeting", meeting.id, meeting.title, "scheduled",
+    { id: user.userId, name: user.fullName, role: user.role },
+    meetingType === "individual"
+      ? `Scheduled 1-on-1 "${meeting.title}"`
+      : `Scheduled team meeting "${meeting.title}"`
+  );
 
   // Notify project members about the new meeting
   const projectMembers = await prisma.projectMember.findMany({

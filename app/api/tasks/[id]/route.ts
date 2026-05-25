@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { notify, notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
 
@@ -59,7 +60,7 @@ export async function PUT(
     // Fetch old task state before mutation (for diff-based notifications)
     const oldTask = await prisma.task.findUnique({
       where: { id },
-      select: { title: true, status: true, assignedToId: true, projectId: true },
+      select: { id: true, title: true, status: true, assignedToId: true, projectId: true },
     });
 
     // Auto-set completedAt when status changes to DONE
@@ -102,46 +103,79 @@ export async function PUT(
       include: TASK_INCLUDE,
     });
 
-    // ── Post-update notifications (fire-and-forget) ───────────────────────
+    // ── Post-update activity log + notifications (fire-and-forget) ──────────
     if (oldTask) {
       const actor = await getUserFromToken().catch(() => null);
       const actorId = actor?.userId;
       const projectId = oldTask.projectId;
       const taskLink = `/projects/${projectId}?tab=tasks`;
+      const actorInfo = actor
+        ? { id: actor.userId, name: actor.fullName, role: actor.role }
+        : { name: "System", role: "system" };
 
-      // 1. Task reassigned — notify the NEW assignee (if changed and not the actor)
       const newAssigneeId = ownerUpdate.assignedToId ?? undefined;
-      if (
-        newAssigneeId &&
-        newAssigneeId !== oldTask.assignedToId &&
-        newAssigneeId !== actorId
-      ) {
-        const project = await prisma.project
-          .findUnique({ where: { id: projectId }, select: { name: true } })
+
+      // 1. Reassigned — log activity + notify new assignee
+      if (newAssigneeId && newAssigneeId !== oldTask.assignedToId) {
+        const assignee = await prisma.user
+          .findUnique({ where: { id: newAssigneeId }, select: { fullName: true } })
           .catch(() => null);
-        await notify(
-          newAssigneeId,
-          "task_reassigned",
-          "Task assigned to you",
-          `"${oldTask.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
-          taskLink
-        );
+
+        if (oldTask.assignedToId) {
+          // Was previously assigned to someone else
+          const prev = await prisma.user
+            .findUnique({ where: { id: oldTask.assignedToId }, select: { fullName: true } })
+            .catch(() => null);
+          await logActivity(
+            projectId, "task", oldTask.id || task.id, oldTask.title, "reassigned",
+            actorInfo,
+            `Reassigned "${oldTask.title}" from ${prev?.fullName ?? "previous assignee"} to ${assignee?.fullName ?? "new assignee"}`
+          );
+        } else {
+          await logActivity(
+            projectId, "task", task.id, oldTask.title, "assigned",
+            actorInfo,
+            `Assigned "${oldTask.title}" to ${assignee?.fullName ?? "a team member"}`
+          );
+        }
+
+        if (newAssigneeId !== actorId) {
+          const project = await prisma.project
+            .findUnique({ where: { id: projectId }, select: { name: true } })
+            .catch(() => null);
+          await notify(
+            newAssigneeId,
+            "task_reassigned",
+            "Task assigned to you",
+            `"${oldTask.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
+            taskLink
+          );
+        }
       }
 
-      // 2. Task became BLOCKED — notify project managers + senior devs
-      if (taskData.status === "BLOCKED" && oldTask.status !== "BLOCKED") {
-        const escalateeIds = await getProjectMemberIdsByRole(
-          projectId,
-          ["manager", "senior_developer"],
-          actorId
+      // 2. Status changed
+      if (taskData.status && taskData.status !== oldTask.status) {
+        const statusLabel: Record<string, string> = {
+          TODO: "To Do", IN_PROGRESS: "In Progress", BLOCKED: "Blocked",
+          IN_REVIEW: "In Review", DONE: "Done",
+        };
+        await logActivity(
+          projectId, "task", task.id, oldTask.title, "status_changed",
+          actorInfo,
+          `Changed status of "${oldTask.title}" from ${statusLabel[oldTask.status] ?? oldTask.status} → ${statusLabel[taskData.status] ?? taskData.status}`
         );
-        await notifyMany(
-          escalateeIds,
-          "task_status_changed",
-          "Task blocked",
-          `"${oldTask.title}" has been marked as blocked and may need attention.`,
-          taskLink
-        );
+
+        // Extra: notify managers + senior devs when task becomes BLOCKED
+        if (taskData.status === "BLOCKED") {
+          const escalateeIds = await getProjectMemberIdsByRole(
+            projectId, ["manager", "senior_developer"], actorId
+          );
+          await notifyMany(
+            escalateeIds, "task_status_changed", "Task blocked",
+            `"${oldTask.title}" has been marked as blocked and may need attention.`,
+            taskLink
+          );
+        }
       }
     }
 

@@ -16,6 +16,7 @@ import { ForecastTab } from "./tabs/ForecastTab";
 import { TeamTab } from "./tabs/TeamTab";
 import { ChatTab } from "./tabs/ChatTab";
 import { EscalationsTab } from "./tabs/EscalationsTab";
+import { ActivityTab } from "./tabs/ActivityTab";
 import { ProjectModal } from "./ProjectModal";
 import {
   PROJECT_STATUS_CONFIG,
@@ -37,6 +38,7 @@ import {
   Users,
   MessageSquare,
   Siren,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -87,6 +89,7 @@ const MANAGER_TABS = [
   { id: "team",        label: "Team",        icon: Users },
   { id: "chat",        label: "Chat",        icon: MessageSquare },
   { id: "escalations", label: "Escalations", icon: Siren },
+  { id: "activity",    label: "Activity",    icon: History },
   { id: "insights",    label: "AI Insights", icon: Brain },
   { id: "report",      label: "Report",      icon: FileText },
 ];
@@ -236,11 +239,12 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
         )}
 
         {/* Manager-only tabs */}
-        {isManager && currentTab === "forecast"  && <ForecastTab project={project} tasks={project.tasks} />}
-        {isManager && currentTab === "gantt"     && <GanttTab    tasks={project.tasks} />}
-        {isManager && currentTab === "risks"     && <RisksTab    projectId={project.id} risks={project.risks} insights={insights} />}
-        {isManager && currentTab === "insights"  && <InsightsTab insights={insights} tasks={project.tasks} />}
-        {isManager && currentTab === "report"    && <ReportTab   projectId={project.id} />}
+        {isManager && currentTab === "forecast"  && <ForecastTab  project={project} tasks={project.tasks} />}
+        {isManager && currentTab === "gantt"     && <GanttTab     tasks={project.tasks} />}
+        {isManager && currentTab === "risks"     && <RisksTab     projectId={project.id} risks={project.risks} insights={insights} />}
+        {isManager && currentTab === "activity"  && <ActivityTab  projectId={project.id} />}
+        {isManager && currentTab === "insights"  && <InsightsTab  insights={insights} tasks={project.tasks} />}
+        {isManager && currentTab === "report"    && <ReportTab    projectId={project.id} />}
 
         {/* Shared tabs (all roles) */}
         {currentTab === "team" && (

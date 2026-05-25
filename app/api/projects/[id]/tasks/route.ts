@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { notify } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
 
@@ -88,22 +89,54 @@ export async function POST(
       include: TASK_INCLUDE,
     });
 
-    // Notify assignee (if assigned and not the creator)
-    if (assignedToId) {
-      const actor = await getUserFromToken().catch(() => null);
-      if (!actor || actor.userId !== assignedToId) {
-        const project = await prisma.project.findUnique({
-          where: { id: projectId },
-          select: { name: true },
-        }).catch(() => null);
-        await notify(
-          assignedToId,
-          "task_assigned",
-          "New task assigned to you",
-          `"${task.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
-          `/projects/${projectId}?tab=tasks`
+    // Notifications + activity log (fire-and-forget)
+    const actor = await getUserFromToken().catch(() => null);
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    }).catch(() => null);
+
+    // Activity: task created
+    if (actor) {
+      await logActivity(
+        projectId,
+        "task",
+        task.id,
+        task.title,
+        "created",
+        { id: actor.userId, name: actor.fullName, role: actor.role },
+        `Created task "${task.title}"`
+      );
+    }
+
+    // Activity: assignment (if task created with an assignee)
+    if (assignedToId && actor) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: assignedToId },
+        select: { fullName: true },
+      }).catch(() => null);
+      if (assignee) {
+        await logActivity(
+          projectId,
+          "task",
+          task.id,
+          task.title,
+          "assigned",
+          { id: actor.userId, name: actor.fullName, role: actor.role },
+          `Assigned "${task.title}" to ${assignee.fullName}`
         );
       }
+    }
+
+    // Notify assignee (if assigned and not the creator)
+    if (assignedToId && (!actor || actor.userId !== assignedToId)) {
+      await notify(
+        assignedToId,
+        "task_assigned",
+        "New task assigned to you",
+        `"${task.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
+        `/projects/${projectId}?tab=tasks`
+      );
     }
 
     return Response.json(task, { status: 201 });

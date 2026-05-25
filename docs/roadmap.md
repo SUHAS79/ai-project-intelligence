@@ -262,6 +262,17 @@
 - [x] Dev/senior project listing shows only user-relevant data (no analytics)
 - [x] Meeting creation scoped to accessible projects per role
 
+### Feature 15 — Activity Log & Audit Trail ✅ (2026-05-25)
+- [x] `ActivityLog` model: projectId, entityType, entityId, entityTitle, action, actorId, actorName, actorRole, details, createdAt — cascade on Project
+- [x] Prisma migration `add-activity-log`
+- [x] `lib/logActivity.ts` — non-throwing `logActivity()` helper; stores the full human-readable sentence so UI needs no reconstruction logic
+- [x] `GET /api/projects/[id]/activity` — manager-only; returns last 150 events
+- [x] `ActivityTab` — timeline grouped by day; coloured action dot per verb; actor initials; emoji entity icon; relative timestamp with full date on hover; Refresh button
+- [x] "Activity" tab added to MANAGER_TABS (between Escalations and AI Insights); `History` icon
+- [x] Triggers in 10 API routes: task created/assigned/reassigned/status-changed, submitted-for-review, approved/rejected/reopened, escalation created/responded/resolved, meeting scheduled, member added/removed
+- [x] Seed: 36 activity entries across 3 projects demonstrating full lifecycle
+- [x] `ActivityLog` cleanup added to `prisma/seed.ts` cleanup block
+
 ### Feature 14 — In-App Notifications Center ✅ (2026-05-25)
 - [x] `Notification` model: userId, type, title, body, link (relative URL), read, createdAt
 - [x] Prisma migration `add-notifications`; cascade-delete on User

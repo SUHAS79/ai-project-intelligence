@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
+import { logActivity } from "@/lib/logActivity";
 
 async function requireAuth() {
   return getUserFromToken();
@@ -80,6 +81,13 @@ export async function POST(
       },
     });
 
+    // Activity log
+    await logActivity(
+      id, "member", userId, user.fullName, "member_added",
+      { id: auth.userId, name: auth.fullName, role: auth.role },
+      `Added ${user.fullName} to the project`
+    );
+
     return Response.json({ member }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -106,9 +114,22 @@ export async function DELETE(
     const body = await req.json();
     const { userId } = z.object({ userId: z.string().min(1) }).parse(body);
 
+    // Fetch user name before deleting
+    const removedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { fullName: true },
+    }).catch(() => null);
+
     await prisma.projectMember.deleteMany({
       where: { projectId: id, userId },
     });
+
+    // Activity log
+    await logActivity(
+      id, "member", userId, removedUser?.fullName ?? userId, "member_removed",
+      { id: auth.userId, name: auth.fullName, role: auth.role },
+      `Removed ${removedUser?.fullName ?? "a member"} from the project`
+    );
 
     return Response.json({ ok: true });
   } catch (error) {

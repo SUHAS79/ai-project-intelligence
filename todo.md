@@ -349,6 +349,28 @@
 - [x] Meetings: project-first creation; dev/senior can only create meetings for their projects
 - [x] 0 TypeScript errors; build passes
 
+## ✅ Feature 15 — Activity Log & Audit Trail (Completed 2026-05-25)
+- [x] `ActivityLog` Prisma model: projectId, entityType, entityId, entityTitle, action, actorId, actorName, actorRole, details (full sentence), createdAt
+- [x] `activityLogs ActivityLog[]` relation added to Project; cascade-delete
+- [x] Prisma migration: `add-activity-log`
+- [x] `lib/logActivity.ts`: `logActivity()` helper — non-throwing; stores full human-readable sentence in `details`
+- [x] `GET /api/projects/[id]/activity` — last 150 events for the project (manager only)
+- [x] `ActivityTab.tsx` — timeline feed grouped by day (Today / Yesterday / date string); colored action dot, actor avatar, emoji entity icon, relative timestamp; Refresh button; empty state
+- [x] `ActivityTab` added to ProjectHub as "Activity" tab (between Escalations and AI Insights); manager-only; `History` icon
+- [x] Activity triggers wired into:
+  - `POST /api/projects/[id]/tasks` → task created; task assigned (if assignee set at creation)
+  - `PUT /api/tasks/[id]` → task assigned (new); task reassigned (was already assigned); task status changed (from X → Y)
+  - `POST /api/tasks/[id]/review` → submitted for review
+  - `PATCH /api/tasks/[id]/review` → approved; rejected (includes rejection reason excerpt); reopened
+  - `POST /api/escalations` → escalation created (includes message excerpt)
+  - `PATCH /api/escalations/[id]` → escalation responded; escalation resolved
+  - `POST /api/meetings` → meeting scheduled (team or 1-on-1)
+  - `POST /api/projects/[id]/members` → member added
+  - `DELETE /api/projects/[id]/members` → member removed
+  - `PUT /api/users/[id]/projects` → member added/removed per project
+- [x] Seed: 36 realistic activity log entries across 3 projects covering full workflow lifecycle
+- [x] 0 TypeScript errors; server restarted with fresh Prisma client
+
 ## ✅ Feature 14 — In-App Notifications Center (Completed 2026-05-25)
 - [x] `Notification` Prisma model: userId, type, title, body, link, read, createdAt
 - [x] Prisma migration: `add-notifications`; User.notifications relation added

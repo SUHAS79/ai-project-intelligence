@@ -4,6 +4,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { TASK_INCLUDE } from "../route";
 import { notify, notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 // POST /api/tasks/[id]/review — developer submits task for review
 const SubmitSchema = z.object({
@@ -65,16 +66,19 @@ export async function POST(
       include: TASK_INCLUDE,
     });
 
-    // Notify senior devs + managers on this project that a task needs review
+    // Activity log
+    await logActivity(
+      task.projectId, "task", task.id, task.title, "submitted_for_review",
+      { id: user.userId, name: user.fullName, role: user.role },
+      `Submitted "${task.title}" for review`
+    );
+
+    // Notify senior devs + managers on this project
     const reviewerIds = await getProjectMemberIdsByRole(
-      task.projectId,
-      ["senior_developer", "manager"],
-      user.userId
+      task.projectId, ["senior_developer", "manager"], user.userId
     );
     await notifyMany(
-      reviewerIds,
-      "task_submitted_for_review",
-      "Task submitted for review",
+      reviewerIds, "task_submitted_for_review", "Task submitted for review",
       `${user.fullName} submitted "${task.title}" for review.`,
       `/projects/${task.projectId}?tab=tasks`
     );
@@ -134,12 +138,16 @@ export async function PATCH(
         },
         include: TASK_INCLUDE,
       });
-      // Notify the assignee their task was approved
+      // Activity log
+      await logActivity(
+        task.projectId, "task", task.id, task.title, "approved",
+        { id: user.userId, name: user.fullName, role: user.role },
+        `Approved "${task.title}"`
+      );
+      // Notify the assignee
       if (task.assignedToId && task.assignedToId !== user.userId) {
         await notify(
-          task.assignedToId,
-          "task_approved",
-          "Task approved ✅",
+          task.assignedToId, "task_approved", "Task approved ✅",
           `${user.fullName} approved "${task.title}". Great work!`,
           `/projects/${task.projectId}?tab=tasks`
         );
@@ -176,12 +184,16 @@ export async function PATCH(
         },
         include: TASK_INCLUDE,
       });
-      // Notify the assignee their task was rejected
+      // Activity log
+      await logActivity(
+        task.projectId, "task", task.id, task.title, "rejected",
+        { id: user.userId, name: user.fullName, role: user.role },
+        `Rejected "${task.title}": ${rejectionReason.trim().slice(0, 120)}${rejectionReason.trim().length > 120 ? "…" : ""}`
+      );
+      // Notify the assignee
       if (task.assignedToId && task.assignedToId !== user.userId) {
         await notify(
-          task.assignedToId,
-          "task_rejected",
-          "Task needs revision",
+          task.assignedToId, "task_rejected", "Task needs revision",
           `${user.fullName} rejected "${task.title}". Please review the feedback.`,
           `/projects/${task.projectId}?tab=tasks`
         );
@@ -216,12 +228,16 @@ export async function PATCH(
         },
         include: TASK_INCLUDE,
       });
-      // Notify the assignee their task was reopened
+      // Activity log
+      await logActivity(
+        task.projectId, "task", task.id, task.title, "reopened",
+        { id: user.userId, name: user.fullName, role: user.role },
+        `Reopened "${task.title}"${reopenReason ? `: ${reopenReason}` : ""}`
+      );
+      // Notify the assignee
       if (task.assignedToId && task.assignedToId !== user.userId) {
         await notify(
-          task.assignedToId,
-          "task_status_changed",
-          "Task reopened",
+          task.assignedToId, "task_status_changed", "Task reopened",
           `${user.fullName} reopened "${task.title}". Please continue working on it.`,
           `/projects/${task.projectId}?tab=tasks`
         );

@@ -474,6 +474,64 @@ await prisma.taskActivity.deleteMany();
 // ... rest unchanged
 ```
 
+## Activity Log & Audit Trail (completed 2026-05-25)
+
+### Schema
+```prisma
+model ActivityLog {
+  id          String   @id @default(cuid())
+  projectId   String   // always project-scoped
+  entityType  String   // task | escalation | meeting | member | project
+  entityId    String
+  entityTitle String   // snapshot at event time
+  action      String   // created | assigned | reassigned | status_changed | submitted_for_review | approved | rejected | reopened | responded | resolved | scheduled | member_added | member_removed
+  actorId     String?
+  actorName   String   // snapshot
+  actorRole   String   // snapshot
+  details     String   // full human-readable sentence stored at write time
+  createdAt   DateTime @default(now())
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+```
+
+### Utility — `lib/logActivity.ts`
+Single export `logActivity(projectId, entityType, entityId, entityTitle, action, actor, details)` — non-throwing.
+
+**Key design decision**: `details` holds the full human-readable sentence (e.g., `"Assigned \"iOS onboarding screens\" to James Kim"`) so the UI component never needs to reconstruct text from structured fields.
+
+### API
+- `GET /api/projects/[id]/activity` → `{ activity: [...] }` — last 150 events, manager only
+
+### UI — `components/tabs/ActivityTab.tsx`
+- Fetches on mount; Refresh button for manual re-fetch
+- Groups items by calendar day (Today / Yesterday / `"Monday, May 25, 2026"`)
+- Each item: colored action dot (`ACTION_DOT` map by verb) + actor avatar (initials) + role badge + `details` text + relative timestamp (full date on `title` hover)
+- Entity type emoji from `ENTITY_ICON` map shown inline before details text
+
+### Tab placement — ProjectHub
+"Activity" tab inserted between Escalations and AI Insights in `MANAGER_TABS` (10 tabs total for managers). DEV_TABS unchanged (4 tabs). Render guard: `{isManager && currentTab === "activity" && <ActivityTab projectId={project.id} />}`
+
+### Triggers wired
+| Where | What's logged |
+|---|---|
+| POST /api/projects/[id]/tasks | task created; task assigned (if assignee set) |
+| PUT /api/tasks/[id] | task assigned; task reassigned (from X to Y); task status changed (X → Y) |
+| POST /api/tasks/[id]/review | submitted for review |
+| PATCH /api/tasks/[id]/review | approved; rejected (with reason excerpt); reopened |
+| POST /api/escalations | escalation created (with message excerpt) |
+| PATCH /api/escalations/[id] | responded; resolved |
+| POST /api/meetings | meeting scheduled |
+| POST /api/projects/[id]/members | member added |
+| DELETE /api/projects/[id]/members | member removed |
+| PUT /api/users/[id]/projects | member added + member removed (per project diff) |
+
+### Seed cleanup order
+```ts
+await prisma.activityLog.deleteMany();  // must come first (before project delete)
+await prisma.notification.deleteMany();
+// ... rest unchanged
+```
+
 ## In-App Notifications Center (completed 2026-05-25)
 
 ### Schema

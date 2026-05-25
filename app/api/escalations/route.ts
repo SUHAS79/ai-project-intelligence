@@ -3,6 +3,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
+import { logActivity } from "@/lib/logActivity";
 
 const CreateEscalationSchema = z.object({
   projectId: z.string().min(1),
@@ -101,6 +102,16 @@ export async function POST(req: NextRequest) {
       respondedBy: { select: { id: true, fullName: true, initials: true } },
     },
   });
+
+  // Activity log
+  const escalationTitle = escalation.task
+    ? `Escalation on "${escalation.task.title}"`
+    : "Escalation";
+  await logActivity(
+    projectId, "escalation", escalation.id, escalationTitle, "created",
+    { id: user.userId, name: user.fullName, role: user.role },
+    `Raised an escalation${escalation.task ? ` on "${escalation.task.title}"` : ""}: ${message.slice(0, 100)}${message.length > 100 ? "…" : ""}`
+  );
 
   // Notify users whose role matches targetRole within this project
   const rolesToNotify =

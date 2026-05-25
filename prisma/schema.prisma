@@ -87,6 +87,23 @@ model Project {
   escalations  Escalation[]
   meetings     Meeting[]
   messages     ProjectMessage[]
+  activityLogs ActivityLog[]
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  projectId   String
+  entityType  String   // task | escalation | meeting | member | project
+  entityId    String   // ID of the entity being acted upon
+  entityTitle String   // snapshot of entity name at event time
+  action      String   // created | assigned | reassigned | status_changed | submitted_for_review | approved | rejected | reopened | responded | resolved | scheduled | member_added | member_removed
+  actorId     String?  // null for system events
+  actorName   String   // snapshot of actor full name
+  actorRole   String   // snapshot of actor role at event time
+  details     String   // full human-readable sentence describing what happened
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Meeting {
