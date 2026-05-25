@@ -27,6 +27,7 @@ model User {
   respondedEscalations Escalation[]    @relation("EscalationResponder")
   availability         Availability[]
   createdMeetings      Meeting[]       @relation("MeetingCreator")
+  participatingIn      Meeting[]       @relation("MeetingParticipant")
   taskComments         TaskComment[]
   projectMessages      ProjectMessage[]
 }
@@ -75,17 +76,20 @@ model Project {
 }
 
 model Meeting {
-  id          String    @id @default(cuid())
-  title       String
-  projectId   String?
-  roomName    String    @unique                    // used to form meet.jit.si/{roomName}
-  scheduledAt DateTime?
-  createdById String
-  status      String    @default("scheduled")      // scheduled | active | ended
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  title         String
+  projectId     String?
+  meetingType   String    @default("team")         // team | individual
+  participantId String?
+  roomName      String    @unique                  // used to form meet.jit.si/{roomName}
+  scheduledAt   DateTime?
+  createdById   String
+  status        String    @default("scheduled")    // scheduled | active | ended
+  createdAt     DateTime  @default(now())
 
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  createdBy User     @relation("MeetingCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy   User     @relation("MeetingCreator",     fields: [createdById],   references: [id], onDelete: Cascade)
+  participant User?    @relation("MeetingParticipant", fields: [participantId], references: [id], onDelete: SetNull)
 }
 
 model Task {

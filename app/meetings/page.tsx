@@ -10,20 +10,34 @@ export default async function MeetingsPage() {
   const user = await getUserFromToken();
   if (!user) return null;
 
-  const [meetingsRaw, projects] = await Promise.all([
-    prisma.meeting.findMany({
-      include: {
-        project: { select: { id: true, name: true } },
-        createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
-      },
-      orderBy: [{ status: "asc" }, { scheduledAt: "asc" }, { createdAt: "desc" }],
-    }),
-    prisma.project.findMany({
-      where: { status: "ACTIVE" },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const meetingsRaw = await prisma.meeting.findMany({
+    include: {
+      project: { select: { id: true, name: true } },
+      createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
+      participant: { select: { id: true, fullName: true, initials: true, role: true } },
+    },
+    orderBy: [{ status: "asc" }, { scheduledAt: "asc" }, { createdAt: "desc" }],
+  });
+
+  // Scope available projects by role:
+  // - Manager: all active projects
+  // - Dev/Senior: only projects they're a member of
+  const projects: { id: string; name: string }[] =
+    user.role === "manager"
+      ? await prisma.project.findMany({
+          where: { status: "ACTIVE" },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        })
+      : await prisma.projectMember.findMany({
+          where: { userId: user.userId },
+          include: { project: { select: { id: true, name: true, status: true } } },
+          orderBy: { addedAt: "asc" },
+        }).then((ms) =>
+          ms
+            .filter((m) => m.project.status === "ACTIVE")
+            .map((m) => ({ id: m.project.id, name: m.project.name }))
+        );
 
   // Serialize dates → strings so client component receives plain strings, not Date objects
   const meetings = meetingsRaw.map((m) => ({

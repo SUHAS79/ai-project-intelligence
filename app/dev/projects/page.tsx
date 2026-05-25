@@ -3,9 +3,11 @@ import { getUserFromToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FolderOpen, Users, Calendar, TrendingUp, ArrowRight, ShieldCheck } from "lucide-react";
-import { getHealthColor, formatDate, daysFromNow, cn } from "@/lib/utils";
-import { computeInsights } from "@/lib/insights";
+import {
+  FolderOpen, Users, Calendar, ArrowRight, ShieldCheck,
+  CheckSquare, Clock,
+} from "lucide-react";
+import { formatDate, daysFromNow, cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -14,19 +16,19 @@ export default async function DevProjectsPage() {
   if (!user) return null;
   if (user.role === "manager") redirect("/");
 
-  // Fetch projects this user belongs to, with full data for insights
+  // Fetch projects this user belongs to, with member + task data
   const memberships = await prisma.projectMember.findMany({
     where: { userId: user.userId },
     include: {
       project: {
         include: {
           tasks: {
-            include: {
-              dependsOn: { include: { dependency: true } },
-              dependedOnBy: { include: { dependent: true } },
+            select: {
+              id: true,
+              status: true,
+              assignedToId: true,
             },
           },
-          risks: true,
           members: {
             include: {
               user: {
@@ -42,13 +44,18 @@ export default async function DevProjectsPage() {
 
   const projects = memberships.map((m) => {
     const p = m.project;
-    const insights = computeInsights(p.tasks as any, p.risks);
-    const totalTasks = p.tasks.length;
-    const doneTasks = p.tasks.filter((t) => t.status === "DONE").length;
-    const progressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-    // Find the project manager (member with manager role)
-    const managerMember = p.members.find((m) => m.user.role === "manager");
+    // My tasks only — scoped to current user
+    const myTasks = p.tasks.filter((t) => t.assignedToId === user.userId);
+    const myTotal = myTasks.length;
+    const myDone = myTasks.filter((t) => t.status === "DONE").length;
+    const myActive = myTasks.filter(
+      (t) => t.status === "IN_PROGRESS" || t.status === "IN_REVIEW"
+    ).length;
+    const myBlocked = myTasks.filter((t) => t.status === "BLOCKED").length;
+
+    // Project manager
+    const managerMember = p.members.find((mem) => mem.user.role === "manager");
     const managerName = managerMember?.user.fullName ?? "Unassigned";
     const teamCount = p.members.length;
 
@@ -59,20 +66,19 @@ export default async function DevProjectsPage() {
       status: p.status,
       startDate: p.startDate.toISOString(),
       endDate: p.endDate.toISOString(),
-      healthScore: insights.healthScore,
-      healthLabel: insights.healthLabel,
-      progressPct,
-      totalTasks,
-      doneTasks,
       managerName,
       teamCount,
+      myTotal,
+      myDone,
+      myActive,
+      myBlocked,
       daysLeft: daysFromNow(p.endDate),
     };
   });
 
   return (
     <AppShell>
-      <div className="p-4 sm:p-8 max-w-5xl mx-auto">
+      <div className="p-4 sm:p-8 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
@@ -95,16 +101,13 @@ export default async function DevProjectsPage() {
               <FolderOpen className="w-6 h-6 text-slate-400" />
             </div>
             <p className="font-medium text-slate-700 mb-1">No projects assigned</p>
-            <p className="text-sm text-slate-400">
-              Ask your manager to add you to a project.
-            </p>
+            <p className="text-sm text-slate-400">Ask your manager to add you to a project.</p>
           </div>
         )}
 
         {/* Project cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid gap-4">
           {projects.map((project) => {
-            const healthColor = getHealthColor(project.healthScore);
             const isOverdue = project.daysLeft < 0;
             const isDueToday = project.daysLeft === 0;
 
@@ -115,6 +118,7 @@ export default async function DevProjectsPage() {
                 className="group block bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-violet-200 transition-all duration-200"
               >
                 <div className="p-6">
+                  {/* Project name + status */}
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -131,45 +135,51 @@ export default async function DevProjectsPage() {
                         </span>
                       </div>
                       {project.description && (
-                        <p className="text-xs text-slate-500 line-clamp-2">
-                          {project.description}
-                        </p>
+                        <p className="text-xs text-slate-500 line-clamp-2">{project.description}</p>
                       )}
                     </div>
 
-                    {/* Health score */}
-                    <div className="flex flex-col items-center px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 shrink-0">
-                      <span className={`text-lg font-bold tabular-nums ${healthColor}`}>
-                        {project.healthScore}
-                      </span>
-                      <span className="text-[9px] text-slate-400 uppercase tracking-wide">Health</span>
+                    {/* My tasks summary badge */}
+                    <div className="shrink-0 flex flex-col items-center px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 text-center min-w-[64px]">
+                      <span className="text-lg font-bold tabular-nums text-slate-800">{project.myTotal}</span>
+                      <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-tight">My Tasks</span>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-slate-500">Progress</span>
-                      <span className="text-xs font-semibold text-slate-700">{project.progressPct}%</span>
+                  {/* My task status chips */}
+                  {project.myTotal > 0 && (
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                      {project.myDone > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                          <CheckSquare className="w-3 h-3" />
+                          {project.myDone} done
+                        </span>
+                      )}
+                      {project.myActive > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
+                          <Clock className="w-3 h-3" />
+                          {project.myActive} in progress
+                        </span>
+                      )}
+                      {project.myBlocked > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">
+                          {project.myBlocked} blocked
+                        </span>
+                      )}
+                      {project.myTotal - project.myDone - project.myActive - project.myBlocked > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-medium">
+                          {project.myTotal - project.myDone - project.myActive - project.myBlocked} to do
+                        </span>
+                      )}
                     </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          project.progressPct >= 80 ? "bg-emerald-500" :
-                          project.progressPct >= 50 ? "bg-blue-500" :
-                          project.progressPct >= 20 ? "bg-amber-500" : "bg-slate-300"
-                        )}
-                        style={{ width: `${project.progressPct}%` }}
-                      />
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      {project.doneTasks} of {project.totalTasks} tasks complete
-                    </p>
-                  </div>
+                  )}
+
+                  {project.myTotal === 0 && (
+                    <p className="text-xs text-slate-400 mb-4">No tasks assigned to you yet.</p>
+                  )}
 
                   {/* Meta row */}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                  <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap pt-3 border-t border-slate-100">
                     <span className="flex items-center gap-1">
                       <ShieldCheck className="w-3 h-3 text-violet-400" />
                       PM: {project.managerName}
@@ -180,24 +190,23 @@ export default async function DevProjectsPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {formatDate(project.endDate)}
+                      Due {formatDate(project.endDate)}
                     </span>
                     <span className={cn(
-                      "flex items-center gap-1 font-medium",
+                      "font-medium",
                       isOverdue ? "text-red-500" :
                       isDueToday ? "text-amber-500" :
                       project.daysLeft <= 7 ? "text-orange-500" : "text-slate-400"
                     )}>
-                      <TrendingUp className="w-3 h-3" />
                       {isOverdue
                         ? `${Math.abs(project.daysLeft)}d overdue`
                         : isDueToday
                         ? "Due today"
-                        : `${project.daysLeft}d remaining`}
+                        : `${project.daysLeft}d left`}
                     </span>
 
                     <span className="ml-auto flex items-center gap-1 text-violet-500 group-hover:gap-2 transition-all font-medium">
-                      Open
+                      Open workspace
                       <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>

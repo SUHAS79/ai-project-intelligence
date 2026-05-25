@@ -4,23 +4,32 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Video, Plus, ExternalLink, Trash2, Clock, CheckCircle2,
-  Calendar, Users, Copy, Zap,
+  Calendar, Copy, Users, User,
 } from "lucide-react";
-import { format, parseISO, isAfter, isBefore, addHours } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MeetingRoom } from "./MeetingRoom";
 import { CreateMeetingModal } from "./CreateMeetingModal";
 import { toast } from "sonner";
 import type { TokenPayload } from "@/lib/roles";
 
+interface MeetingParticipant {
+  id: string;
+  fullName: string;
+  initials: string;
+  role: string;
+}
+
 interface Meeting {
   id: string;
   title: string;
   roomName: string;
   scheduledAt: string | null;
+  meetingType: string;
   status: string;
   createdAt: string;
   project: { id: string; name: string } | null;
+  participant: MeetingParticipant | null;
   createdBy: { id: string; fullName: string; initials: string; role: string };
 }
 
@@ -47,22 +56,20 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
   const [activeRoom, setActiveRoom] = useState<Meeting | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [startingInstant, setStartingInstant] = useState(false);
 
-  const upcomingMeetings = meetings.filter(
-    (m) => m.status === "scheduled"
-  ).sort((a, b) => {
-    if (!a.scheduledAt && !b.scheduledAt) return 0;
-    if (!a.scheduledAt) return 1;
-    if (!b.scheduledAt) return -1;
-    return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
-  });
+  const upcomingMeetings = meetings
+    .filter((m) => m.status === "scheduled")
+    .sort((a, b) => {
+      if (!a.scheduledAt && !b.scheduledAt) return 0;
+      if (!a.scheduledAt) return 1;
+      if (!b.scheduledAt) return -1;
+      return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
+    });
 
   const endedMeetings = meetings.filter((m) => m.status === "ended");
   const activeMeetings = meetings.filter((m) => m.status === "active");
 
   async function handleJoin(meeting: Meeting) {
-    // Mark as active
     try {
       await fetch(`/api/meetings/${meeting.id}`, {
         method: "PATCH",
@@ -132,51 +139,23 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
           </button>
         </div>
 
-        {/* Instant meeting CTA */}
-        <button
-          disabled={startingInstant}
-          onClick={async () => {
-            if (startingInstant) return;
-            setStartingInstant(true);
-            try {
-              const res = await fetch("/api/meetings", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: "Instant Meeting", projectId: null, scheduledAt: null }),
-              });
-              if (res.ok) {
-                const m = await res.json();
-                setMeetings((prev) => [m, ...prev]);
-                handleJoin(m);
-              } else {
-                toast.error("Failed to create meeting. Please try again.");
-              }
-            } catch {
-              toast.error("Something went wrong.");
-            } finally {
-              setStartingInstant(false);
-            }
-          }}
-          className="w-full flex items-center gap-4 px-5 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl text-white hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-200 group disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            {startingInstant ? (
-              <svg className="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
-            )}
+        {/* Empty state */}
+        {meetings.length === 0 && (
+          <div className="bg-white rounded-2xl border border-dashed border-slate-200 py-14 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-4">
+              <Video className="w-6 h-6 text-violet-400" />
+            </div>
+            <p className="font-semibold text-slate-700 mb-1">No meetings yet</p>
+            <p className="text-sm text-slate-400 mb-4">Create a meeting tied to a project to get started.</p>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Meeting
+            </button>
           </div>
-          <div className="text-left">
-            <p className="font-semibold text-base">
-              {startingInstant ? "Starting…" : "Start Instant Meeting"}
-            </p>
-            <p className="text-violet-200 text-sm">Jump in immediately — no scheduling needed</p>
-          </div>
-          <Video className="w-5 h-5 ml-auto opacity-70 group-hover:opacity-100 transition-opacity" />
-        </button>
+        )}
 
         {/* Active meetings */}
         {activeMeetings.length > 0 && (
@@ -196,13 +175,9 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
         )}
 
         {/* Upcoming / scheduled */}
-        <Section title="Scheduled" icon={<Calendar className="w-4 h-4 text-slate-400" />}>
-          {upcomingMeetings.length === 0 ? (
-            <div className="bg-white rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
-              No upcoming meetings. Create one above or start an instant meeting.
-            </div>
-          ) : (
-            upcomingMeetings.map((m) => (
+        {upcomingMeetings.length > 0 && (
+          <Section title="Scheduled" icon={<Calendar className="w-4 h-4 text-slate-400" />}>
+            {upcomingMeetings.map((m) => (
               <MeetingCard
                 key={m.id}
                 meeting={m}
@@ -212,9 +187,9 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
                 onCopyLink={() => handleCopyLink(m.roomName)}
                 deletingId={deletingId}
               />
-            ))
-          )}
-        </Section>
+            ))}
+          </Section>
+        )}
 
         {/* Ended meetings */}
         {endedMeetings.length > 0 && (
@@ -251,6 +226,7 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
       {showCreate && (
         <CreateMeetingModal
           projects={projects}
+          currentUserId={user.userId}
           onClose={() => setShowCreate(false)}
           onCreated={handleCreated}
         />
@@ -298,6 +274,7 @@ function MeetingCard({
 }) {
   const status = STATUS_CONFIG[meeting.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.scheduled;
   const jitsiUrl = `https://meet.jit.si/${meeting.roomName}`;
+  const isIndividual = meeting.meetingType === "individual";
 
   return (
     <div className={cn(
@@ -330,13 +307,29 @@ function MeetingCard({
             <div className={cn("w-1.5 h-1.5 rounded-full", status.dot)} />
             {status.label}
           </span>
-          {meeting.project && (
-            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-              {meeting.project.name}
-            </span>
-          )}
+          {/* Meeting type badge */}
+          <span className={cn(
+            "text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1",
+            isIndividual
+              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+          )}>
+            {isIndividual ? <User className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />}
+            {isIndividual ? "1-on-1" : "Team"}
+          </span>
         </div>
+
         <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
+          {meeting.project && (
+            <span className="font-medium text-slate-500">{meeting.project.name}</span>
+          )}
+          {meeting.project && <span className="text-slate-300">·</span>}
+          {isIndividual && meeting.participant ? (
+            <span>With {meeting.participant.fullName}</span>
+          ) : (
+            <span>Full team</span>
+          )}
+          <span className="text-slate-300">·</span>
           {meeting.scheduledAt ? (
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
@@ -347,8 +340,6 @@ function MeetingCard({
           )}
           <span className="text-slate-300">·</span>
           <span>By {meeting.createdBy.fullName}</span>
-          <span className="text-slate-300">·</span>
-          <span className="font-mono text-[10px]">{meeting.roomName}</span>
         </div>
       </div>
 

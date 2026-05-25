@@ -473,3 +473,34 @@ await prisma.projectMessage.deleteMany();
 await prisma.taskActivity.deleteMany();
 // ... rest unchanged
 ```
+
+## Collaboration Flows Refactor (completed 2026-05-25)
+
+### Dev/Senior Project Listing (`/dev/projects`)
+- Removed health score widget and project-wide progress bar (manager analytics)
+- Card now shows: MY task count badge + status breakdown chips (done/active/blocked/todo)
+- All task data scoped to `assignedToId === user.userId` — no team-wide metrics visible
+
+### Meetings — Project-First Flow
+- **Schema**: `meetingType String @default("team")` and `participantId String?` added to `Meeting`; `participatingIn Meeting[]` added to `User`
+- **Migration**: `add-meeting-type`
+- **API** (`POST /api/meetings`):
+  - `projectId` is now required
+  - `meetingType`: `"team"` | `"individual"`
+  - `participantId` required for individual; validated as project member
+  - Response now includes `participant { id, fullName, initials, role }`
+- **CreateMeetingModal** — 4-step flow:
+  1. Select Project (required; scoped to user's accessible projects)
+  2. Select Type: Full Team or 1-on-1
+  3. (if 1-on-1) Select participant from project members (fetches `/api/projects/[id]/members`)
+  4. Title (auto-generated, editable) + optional scheduled time
+- **MeetingsClient** — instant meeting CTA removed; `MeetingCard` shows type badge (Team / 1-on-1) + participant name
+- **Meetings page**: projects scoped by role — manager sees all active; dev/senior sees only their member projects
+
+### Role Enforcement Summary
+| Area | Manager | Developer / Senior Dev |
+|---|---|---|
+| Project workspace tabs | 9 (incl. Forecast, Risks, AI Insights, Report) | 4 (My Tasks, Team, Chat, Escalations) |
+| `/dev/projects` listing | N/A (redirects to `/`) | MY tasks only — no health/progress analytics |
+| Meeting creation projects | All active projects | Own member projects only |
+| Task visibility via API | All project tasks | Own assigned tasks only (`assignedToId`) |

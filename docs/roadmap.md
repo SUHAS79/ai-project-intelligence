@@ -227,6 +227,41 @@
 - [x] Back link: "/" for managers; "/dev/projects" for dev/senior
 - [x] 0 TypeScript errors
 
+### Feature 13 — Collaboration Flows Refactor ✅ (2026-05-25)
+
+#### Part 1 — Dev/Senior Project Listing Cleanup
+- [x] `/dev/projects` page: health score widget and project-wide progress bar removed
+- [x] Replaced with per-user MY task breakdown chips: done / in progress / blocked / to do
+- [x] "My Tasks" count badge in card header (scoped to current user only)
+- [x] Retained: PM name, team count, due date, overdue indicator
+
+#### Part 2 — Project Chat Verified
+- [x] API confirmed correct: GET returns `{ messages: [...] }`; ChatTab uses `data.messages ?? []`
+- [x] Project-scoped chat — messages stored with `projectId`; cross-project isolation enforced at DB level
+- [x] Membership guard on GET and POST; managers always have access
+- [x] 5s polling, auto-scroll, grouped bubbles, Enter to send — all functional
+
+#### Part 3 — Meetings Project-First
+- [x] Schema: `meetingType String @default("team")` + `participantId String?` + `participant` relation on Meeting
+- [x] User model: `participatingIn Meeting[]` relation added
+- [x] Migration `add-meeting-type` — SQLite DB updated
+- [x] API POST now requires `projectId`; validates participant membership for individual meetings
+- [x] `participant` included in all meeting GET/POST responses
+- [x] **CreateMeetingModal** completely rewritten — 4-step guided flow:
+  - Step 1: Choose project (mandatory; scoped to user-accessible projects)
+  - Step 2: Meeting type — Full Team or 1-on-1
+  - Step 3 (1-on-1 only): Select one project member (fetched from API; self excluded)
+  - Step 4: Title (auto-generated, editable) + optional scheduled time
+- [x] "Instant Meeting" CTA removed — all meetings now project-tied
+- [x] MeetingCard shows type badge (Team / 1-on-1) and participant name for individual meetings
+- [x] Meetings page scopes project dropdown by role (manager: all active; dev/senior: member projects only)
+- [x] Seed: 8 meetings — 6 team + 2 individual (Sarah↔Alex, Marcus↔Sophie)
+
+#### Part 4 — Role Safety
+- [x] MANAGER_TABS (9) vs DEV_TABS (4) in ProjectHub — enforced at tab bar and render level
+- [x] Dev/senior project listing shows only user-relevant data (no analytics)
+- [x] Meeting creation scoped to accessible projects per role
+
 ---
 
 ## Next Priorities (Phase 3)

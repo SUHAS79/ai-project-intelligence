@@ -311,6 +311,44 @@
 - [x] health score header still computed from ALL project tasks (server-side, for accuracy regardless of role)
 - [x] 0 TypeScript errors confirmed
 
+## ✅ Feature 13 — Collaboration Flows Refactor (Completed 2026-05-25)
+
+### Part 1 — Dev/Senior Project Listing Cleanup
+- [x] `/dev/projects` page: removed health score widget and project-wide progress bar
+- [x] Now shows per-user task breakdown: done / in progress / blocked / to do chips (only MY tasks)
+- [x] "My Tasks" badge (count) in card header instead of health score
+- [x] Still shows: PM name, team count, due date, days remaining/overdue
+
+### Part 2 — Project Chat Verified & Solid
+- [x] GET /api/projects/[id]/messages returns `{ messages: [...] }` — ChatTab reads `data.messages ?? []` ✓
+- [x] POST creates and returns message, ChatTab immediately refreshes ✓
+- [x] Membership guard: managers always allowed; others checked against ProjectMember table ✓
+- [x] Messages persisted in DB, scoped to projectId — cross-project isolation guaranteed ✓
+- [x] 5s polling, auto-scroll to bottom, grouped bubbles, Enter to send ✓
+
+### Part 3 — Meetings Project-First
+- [x] Prisma schema: `meetingType String @default("team")` + `participantId String?` added to Meeting model
+- [x] User model: `participatingIn Meeting[] @relation("MeetingParticipant")` added
+- [x] Migration `add-meeting-type` applied; Prisma client regenerated
+- [x] `GET/POST /api/meetings` updated: POST now requires `projectId`; validates participant is a project member for individual meetings; includes `participant` in response
+- [x] CreateMeetingModal rewritten — 4-step flow:
+  - Step 1: Select Project (required, shows user-accessible projects only)
+  - Step 2: Select Type — Full Team or 1-on-1
+  - Step 3 (if 1-on-1): Select participant from project members (fetches /api/projects/[id]/members; excludes self)
+  - Step 4: Auto-generated title (editable) + optional scheduled date/time
+- [x] "Instant Meeting" CTA button removed — all meetings now require project context
+- [x] MeetingsClient updated: Meeting type badge (Team/1-on-1) and participant name shown in every MeetingCard
+- [x] Meetings page scopes available projects by role: manager sees all active; dev/senior see only their member projects
+- [x] Seed: 2 individual meetings added (Sarah↔Alex for Mobile App; Marcus↔Sophie for Data Migration); `meetingType: "team"` explicit on all team meetings
+- [x] Seed: 8 meetings total (was 7); db reseeded
+
+### Part 4 — Role Safety Confirmed
+- [x] Manager tabs (9): Tasks · Forecast · Timeline · Risks · Team · Chat · Escalations · AI Insights · Report
+- [x] Dev/Senior tabs (4): My Tasks · Team · Chat · Escalations
+- [x] /dev/projects listing: no health score, no project-wide progress — only MY task status
+- [x] Meetings: project-first creation; dev/senior can only create meetings for their projects
+- [x] 0 TypeScript errors; build passes
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

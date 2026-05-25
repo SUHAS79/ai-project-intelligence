@@ -5,13 +5,16 @@ import { z } from "zod";
 
 const CreateMeetingSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
-  projectId: z.string().optional().nullable(),
+  projectId: z.string().min(1, "Project is required"),
+  meetingType: z.enum(["team", "individual"]).default("team"),
+  participantId: z.string().optional().nullable(),
   scheduledAt: z.string().optional().nullable(), // ISO datetime string
 });
 
-const MEETING_INCLUDE = {
+export const MEETING_INCLUDE = {
   project: { select: { id: true, name: true } },
   createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
+  participant: { select: { id: true, fullName: true, initials: true, role: true } },
 } as const;
 
 // GET /api/meetings — all meetings
@@ -32,7 +35,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(meetings);
 }
 
-// POST /api/meetings — create a new meeting
+// POST /api/meetings — create a new meeting (project is required)
 export async function POST(req: NextRequest) {
   const user = await getUserFromToken();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,10 +46,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
 
-  const { title, projectId, scheduledAt } = parsed.data;
+  const { title, projectId, meetingType, participantId, scheduledAt } = parsed.data;
+
+  // Verify project exists and user can access it
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, members: { select: { userId: true } } },
+  });
+  if (!project) {
+    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+
+  // For non-managers, verify they are a project member
+  if (user.role !== "manager") {
+    const isMember = project.members.some((m) => m.userId === user.userId);
+    if (!isMember) {
+      return NextResponse.json({ error: "You are not a member of this project" }, { status: 403 });
+    }
+  }
+
+  // For individual meeting, verify participant is a project member
+  if (meetingType === "individual" && participantId) {
+    const isParticipantMember = project.members.some((m) => m.userId === participantId);
+    if (!isParticipantMember) {
+      return NextResponse.json({ error: "Participant must be a project member" }, { status: 400 });
+    }
+  }
 
   // Generate a unique, URL-safe room name
-  // Format: namo-{slug}-{short-id}
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -57,7 +84,9 @@ export async function POST(req: NextRequest) {
   const meeting = await prisma.meeting.create({
     data: {
       title,
-      projectId: projectId ?? null,
+      projectId,
+      meetingType,
+      participantId: meetingType === "individual" ? (participantId ?? null) : null,
       roomName,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       createdById: user.userId,

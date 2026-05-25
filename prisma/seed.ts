@@ -942,11 +942,13 @@ async function main() {
   });
 
   // ─── Meetings ─────────────────────────────────────────────────────────────
+  // meetingType: "team" (full project team) | "individual" (1-on-1 with participantId)
   await prisma.meeting.createMany({
     data: [
       {
         title: "Mobile App Sprint Review",
         projectId: p1.id,
+        meetingType: "team",
         roomName: "namo-sprint-review-a3f9k2",
         scheduledAt: dt(1, 14),
         createdById: sarah.id,
@@ -955,14 +957,27 @@ async function main() {
       {
         title: "iOS Review — Onboarding Screens",
         projectId: p1.id,
+        meetingType: "team",
         roomName: "namo-ios-review-b7m4x1",
         scheduledAt: dt(0, 11),
         createdById: alex.id,
         status: "scheduled",
       },
       {
+        // 1-on-1: Sarah checks in with Alex on the blocked Android task
+        title: "1-on-1 with Alex Rivera",
+        projectId: p1.id,
+        meetingType: "individual",
+        participantId: alex.id,
+        roomName: "namo-1on1-sarah-alex-h2j5n9",
+        scheduledAt: dt(0, 16),
+        createdById: sarah.id,
+        status: "scheduled",
+      },
+      {
         title: "ETL Pipeline Retrospective",
         projectId: p2.id,
+        meetingType: "team",
         roomName: "namo-etl-retro-c8p2z5",
         scheduledAt: null,
         createdById: carlos.id,
@@ -971,30 +986,36 @@ async function main() {
       {
         title: "Data Migration Daily Standup",
         projectId: p2.id,
+        meetingType: "team",
         roomName: "namo-data-standup-d5w3y6",
         scheduledAt: dt(1, 9),
         createdById: marcus.id,
         status: "scheduled",
       },
       {
+        // 1-on-1: Marcus follows up with Sophie on overdue ETL work
+        title: "1-on-1 with Sophie Brown",
+        projectId: p2.id,
+        meetingType: "individual",
+        participantId: sophie.id,
+        roomName: "namo-1on1-marcus-sophie-k7r3m1",
+        scheduledAt: dt(1, 11),
+        createdById: marcus.id,
+        status: "scheduled",
+      },
+      {
         title: "Dashboard Design Review",
         projectId: p3.id,
+        meetingType: "team",
         roomName: "namo-design-review-e1n8q4",
         scheduledAt: dt(0, 15),
         createdById: rachel.id,
         status: "scheduled",
       },
       {
-        title: "All-Hands Q3 Planning",
-        projectId: null,
-        roomName: "namo-all-hands-f6r2t8",
-        scheduledAt: dt(7, 15),
-        createdById: sarah.id,
-        status: "scheduled",
-      },
-      {
         title: "Quick Sync — Android Blocker",
         projectId: p1.id,
+        meetingType: "team",
         roomName: "namo-android-sync-g9k3v7",
         scheduledAt: null,
         createdById: maria.id,
