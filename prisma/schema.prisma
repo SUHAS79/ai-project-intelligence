@@ -27,6 +27,8 @@ model User {
   respondedEscalations Escalation[]    @relation("EscalationResponder")
   availability         Availability[]
   createdMeetings      Meeting[]       @relation("MeetingCreator")
+  taskComments         TaskComment[]
+  projectMessages      ProjectMessage[]
 }
 
 model Availability {
@@ -69,6 +71,7 @@ model Project {
   members      ProjectMember[]
   escalations  Escalation[]
   meetings     Meeting[]
+  messages     ProjectMessage[]
 }
 
 model Meeting {
@@ -117,6 +120,35 @@ model Task {
   dependedOnBy TaskDependency[] @relation("dependency")
   activities   TaskActivity[]
   escalations  Escalation[]
+  comments     TaskComment[]
+}
+
+model TaskComment {
+  id           String   @id @default(cuid())
+  taskId       String
+  userId       String
+  userFullName String
+  userRole     String
+  userInitials String
+  body         String
+  createdAt    DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProjectMessage {
+  id           String   @id @default(cuid())
+  projectId    String
+  userId       String
+  userFullName String
+  userRole     String
+  userInitials String
+  body         String
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Escalation {

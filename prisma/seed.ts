@@ -18,6 +18,8 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // ─── Cleanup (safe dependency order) ────────────────────────────────────────
+  await prisma.taskComment.deleteMany();
+  await prisma.projectMessage.deleteMany();
   await prisma.taskActivity.deleteMany();
   await prisma.taskDependency.deleteMany();
   await prisma.escalation.deleteMany();
@@ -1001,6 +1003,170 @@ async function main() {
     ],
   });
 
+  // ─── Project Chat Messages ────────────────────────────────────────────────
+  // These are seeded after tasks/users are created so we have valid IDs
+  await prisma.projectMessage.createMany({
+    data: [
+      // Project 1 — Mobile App Launch chat
+      {
+        projectId: p1.id,
+        userId: sarah.id, userFullName: sarah.fullName, userRole: sarah.role, userInitials: sarah.initials,
+        body: "Team, iOS review is first priority this week. Alex please wrap up the onboarding screens review by EOD today.",
+        createdAt: dt(-2, 9),
+      },
+      {
+        projectId: p1.id,
+        userId: alex.id, userFullName: alex.fullName, userRole: alex.role, userInitials: alex.initials,
+        body: "On it. I've already left comments in the PR. James, let's sync at 11am to go through the feedback together.",
+        createdAt: dt(-2, 9),
+      },
+      {
+        projectId: p1.id,
+        userId: james.id, userFullName: james.fullName, userRole: james.role, userInitials: james.initials,
+        body: "Works for me. I'll have the revised screens ready by then.",
+        createdAt: dt(-2, 10),
+      },
+      {
+        projectId: p1.id,
+        userId: maria.id, userFullName: maria.fullName, userRole: maria.role, userInitials: maria.initials,
+        body: "Any update on the design assets? I'm still blocked on the Android onboarding screens.",
+        createdAt: dt(-1, 14),
+      },
+      {
+        projectId: p1.id,
+        userId: sarah.id, userFullName: sarah.fullName, userRole: sarah.role, userInitials: sarah.initials,
+        body: "Maria — asset exports are going out today. Alex is packaging them now. You should have them by 3pm.",
+        createdAt: dt(-1, 14),
+      },
+      // Project 2 — Data Platform Migration chat
+      {
+        projectId: p2.id,
+        userId: marcus.id, userFullName: marcus.fullName, userRole: marcus.role, userInitials: marcus.initials,
+        body: "Daily standup reminder: ETL status, blockers, ETA update. Aisha, Tyler — please give a quick status on your pipelines.",
+        createdAt: dt(-3, 8),
+      },
+      {
+        projectId: p2.id,
+        userId: aisha.id, userFullName: aisha.fullName, userRole: aisha.role, userInitials: aisha.initials,
+        body: "Batch ETL: 9 of 12 sources done. The last 3 have non-standard schemas. I'm building custom transforms. Estimate 2 more days.",
+        createdAt: dt(-3, 8),
+      },
+      {
+        projectId: p2.id,
+        userId: tyler.id, userFullName: tyler.fullName, userRole: tyler.role, userInitials: tyler.initials,
+        body: "Streaming pipeline: Kinesis consumers working. Working on the dead-letter queue and retry logic. On track for Friday.",
+        createdAt: dt(-3, 8),
+      },
+      {
+        projectId: p2.id,
+        userId: carlos.id, userFullName: carlos.fullName, userRole: carlos.role, userInitials: carlos.initials,
+        body: "Aisha, I'll pair with you on those 3 tricky sources this afternoon. I've seen this schema pattern before — should be solvable in a few hours.",
+        createdAt: dt(-3, 9),
+      },
+      {
+        projectId: p2.id,
+        userId: aisha.id, userFullName: aisha.fullName, userRole: aisha.role, userInitials: aisha.initials,
+        body: "That would be great, Carlos. Calendar invite sent for 2pm.",
+        createdAt: dt(-3, 9),
+      },
+      // Project 3 — Dashboard Redesign chat
+      {
+        projectId: p3.id,
+        userId: rachel.id, userFullName: rachel.fullName, userRole: rachel.role, userInitials: rachel.initials,
+        body: "Wireframe review session is TODAY at 3pm. Everyone please join the Dashboard Design Review meeting. Yuki will walk us through the updated flows.",
+        createdAt: dt(0, 9),
+      },
+      {
+        projectId: p3.id,
+        userId: yuki.id, userFullName: yuki.fullName, userRole: yuki.role, userInitials: yuki.initials,
+        body: "I've exported the Figma frames to PDF. Sharing the link in Slack. Main changes: simplified nav, data-dense table view, and a new metrics sidebar.",
+        createdAt: dt(0, 10),
+      },
+      {
+        projectId: p3.id,
+        userId: jordan.id, userFullName: jordan.fullName, userRole: jordan.role, userInitials: jordan.initials,
+        body: "Looks great. The metrics sidebar is much cleaner than what we had before. One question — is the table view sortable or is that Phase 2?",
+        createdAt: dt(0, 10),
+      },
+      {
+        projectId: p3.id,
+        userId: yuki.id, userFullName: yuki.fullName, userRole: yuki.role, userInitials: yuki.initials,
+        body: "Sort by column is in scope for Phase 1. Search + filter is Phase 2.",
+        createdAt: dt(0, 11),
+      },
+    ],
+  });
+
+  // ─── Task Comments ────────────────────────────────────────────────────────
+  await prisma.taskComment.createMany({
+    data: [
+      // iOS onboarding task (t4) — James + Alex thread
+      {
+        taskId: t4.id,
+        userId: alex.id, userFullName: alex.fullName, userRole: alex.role, userInitials: alex.initials,
+        body: "James, I've reviewed the screens. Main feedback: the permission prompt for notifications fires too early. Move it after the first value moment (after user completes step 3).",
+        createdAt: dt(-1, 11),
+      },
+      {
+        taskId: t4.id,
+        userId: james.id, userFullName: james.fullName, userRole: james.role, userInitials: james.initials,
+        body: "Makes sense. I'll also fix the back button animation on step 2 — it currently slides in the wrong direction. Will have a new build by 4pm.",
+        createdAt: dt(-1, 11),
+      },
+      {
+        taskId: t4.id,
+        userId: alex.id, userFullName: alex.fullName, userRole: alex.role, userInitials: alex.initials,
+        body: "Perfect. Also cc Sarah on the build so she can sign off on the permission prompt placement.",
+        createdAt: dt(-1, 12),
+      },
+      // Android onboarding (t5) — Maria + Alex
+      {
+        taskId: t5.id,
+        userId: maria.id, userFullName: maria.fullName, userRole: maria.role, userInitials: maria.initials,
+        body: "Alex — I'm still waiting on the asset exports from iOS. Can you get me the PNG exports at 3x for the welcome illustrations?",
+        createdAt: dt(-2, 10),
+      },
+      {
+        taskId: t5.id,
+        userId: alex.id, userFullName: alex.fullName, userRole: alex.role, userInitials: alex.initials,
+        body: "Packaging them now. Will drop a link in Slack by 3pm today.",
+        createdAt: dt(-2, 14),
+      },
+      // ETL batch pipeline (dp4) — Aisha + Carlos
+      {
+        taskId: dp4.id,
+        userId: aisha.id, userFullName: aisha.fullName, userRole: aisha.role, userInitials: aisha.initials,
+        body: "Carlos — the legacy CRM export uses a non-standard date format (MM/DD/YY with no century). Any existing parser I can reuse?",
+        createdAt: dt(-3, 16),
+      },
+      {
+        taskId: dp4.id,
+        userId: carlos.id, userFullName: carlos.fullName, userRole: carlos.role, userInitials: carlos.initials,
+        body: "Yes — check `lib/legacy_parsers/crm_date.py`. I wrote it for the 2024 migration. It handles both 2-digit and 4-digit year formats.",
+        createdAt: dt(-3, 17),
+      },
+      {
+        taskId: dp4.id,
+        userId: aisha.id, userFullName: aisha.fullName, userRole: aisha.role, userInitials: aisha.initials,
+        body: "Perfect, exactly what I needed. That saved me an hour. Thanks!",
+        createdAt: dt(-3, 17),
+      },
+      // Wireframes task (p3t2) — Yuki + Rachel
+      {
+        taskId: p3t2.id,
+        userId: rachel.id, userFullName: rachel.fullName, userRole: rachel.role, userInitials: rachel.initials,
+        body: "Yuki, the wireframes look great overall. Can you add a loading skeleton state for the data tables? The ops team specifically asked for that.",
+        createdAt: dt(-1, 16),
+      },
+      {
+        taskId: p3t2.id,
+        userId: yuki.id, userFullName: yuki.fullName, userRole: yuki.role, userInitials: yuki.initials,
+        body: "Will do — skeleton states for all table and chart components. I'll have an updated version in the morning.",
+        createdAt: dt(-1, 16),
+      },
+    ],
+  });
+
   // ─── Summary ──────────────────────────────────────────────────────────────
   console.log("✅ Seed complete!");
   console.log(`   • Users: 19 (3 managers, 6 senior devs, 10 developers)`);
@@ -1012,6 +1178,8 @@ async function main() {
   console.log(`   • Escalations: 6`);
   console.log(`   • Availability entries: 15`);
   console.log(`   • Meetings: 7`);
+  console.log(`   • Project chat messages: 14`);
+  console.log(`   • Task comments: 9`);
   console.log(``);
   console.log("🔑 Demo login credentials:");
   console.log("   Manager      → sarah@namo.dev   / manager123");

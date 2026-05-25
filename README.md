@@ -59,9 +59,17 @@ All 19 demo accounts use the same password per role. On the login page, click an
 ### 👥 Team Management
 - **People page** — sortable/searchable table of all 19 team members with role and project assignment
 - **Project assignment** — assign/reassign employees to projects directly from the People page; updates team lists instantly
-- **Workload view** — per-developer task load scoring (idle → light → balanced → heavy → overloaded)
+- **Workload view** — per-developer task load scoring (idle → light → balanced → heavy → overloaded); inline **Reassign** action on overloaded tasks
 - **Availability calendar** — company holidays, vacation requests (with approval), sick days, WFH
-- **Escalation system** — developers escalate blockers to senior devs or managers; full respond/resolve flow
+- **Escalation system** — developers escalate blockers to senior devs or managers; full respond/resolve flow; "Thread" button opens task comment thread for direct contact
+
+### 🧑‍💻 Developer & Senior Dev Workspace
+- **My Projects** — dedicated projects page listing all assigned projects with health score, progress, manager, team count, and due date
+- **Project workspace** — full project view with Tasks, Forecast, Timeline, Risks, Team, Chat, Escalations, AI Insights, Report (accessible to all roles)
+- **Task comment threads** — per-task discussion thread (bubble UI); any role can comment; accessible from every task row via 💬 button
+- **Project group chat** — persistent team chat per project; polls every 5s; message bubbles with role badges; enter to send
+- **Team view** — see all project members with clearly identified roles (PM, Senior Dev, Developer)
+- **Project escalations** — view and create escalations from within the project workspace
 
 ### 📹 Meetings
 - **Instant meetings** — one click to start a Jitsi Meet room, no account required
@@ -131,7 +139,7 @@ The seed script creates a fully-populated realistic workspace:
 - `BLOCKED` — overdue Android task with an open escalation
 - `TODO` — upcoming work with estimates
 
-**Supporting data**: 36 dependencies · 18 activity log entries · 8 risks · 6 escalations · 15 availability entries · 7 meetings
+**Supporting data**: 36 dependencies · 18 activity log entries · 8 risks · 6 escalations · 15 availability entries · 7 meetings · 14 project chat messages · 9 task comments
 
 Re-seed at any time: `npm run seed` (wipes and recreates all demo data in ~3 seconds).
 
@@ -141,17 +149,22 @@ Re-seed at any time: `npm run seed` (wipes and recreates all demo data in ~3 sec
 
 ```
 app/                    Next.js App Router pages + API routes
+  dev/projects/         Developer "My Projects" page
   api/
     users/[id]/projects/  GET/PUT — user project membership management
     projects/[id]/members/ GET/POST/DELETE — project team management
+    projects/[id]/messages/ GET/POST — project group chat
+    tasks/[id]/comments/  GET/POST — per-task comment threads
     meetings/             GET/POST/PATCH/DELETE — meeting CRUD
     escalations/          GET/POST/PATCH/DELETE — escalation flow
     availability/         GET/POST/PATCH/DELETE — calendar entries
     reports/portfolio/    GET — cross-project summary
 components/
   PeopleManagement.tsx  People table with inline project assignment modal
+  TaskCommentThread.tsx Task comment thread modal
   MeetingsClient.tsx    Meeting list with Jitsi integration
-  tabs/                 TasksTab, ForecastTab, GanttTab, RisksTab, InsightsTab, ReportTab
+  WorkloadView.tsx      Workload cards with inline task reassignment
+  tabs/                 TasksTab, ForecastTab, GanttTab, RisksTab, InsightsTab, ReportTab, ChatTab, EscalationsTab
   ui/                   Button, Badge primitives
 lib/
   insights.ts           AI heuristics engine
@@ -159,7 +172,7 @@ lib/
   report.ts             Report generator (daily/weekly/monthly + portfolio)
   prisma.ts             DB client singleton
 prisma/
-  schema.prisma         DB schema (19 models)
+  schema.prisma         DB schema (21 models including TaskComment + ProjectMessage)
   seed.ts               Comprehensive demo data seeder
 docs/                   Roadmap, architecture, decisions
 ```

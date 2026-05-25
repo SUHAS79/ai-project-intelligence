@@ -125,7 +125,11 @@ export default async function WorkloadPage() {
           </div>
         </div>
 
-        <WorkloadView developers={developers} unassignedTasks={unassigned} />
+        <WorkloadView
+          developers={developers}
+          unassignedTasks={unassigned}
+          allCandidates={users.map((u) => ({ id: u.id, fullName: u.fullName, initials: u.initials, role: u.role }))}
+        />
       </div>
     </AppShell>
   );

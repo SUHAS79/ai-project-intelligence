@@ -84,6 +84,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
         allUsers={allUsers}
         isManager={tokenUser?.role === "manager"}
         userRole={tokenUser?.role ?? "manager"}
+        currentUserId={tokenUser?.userId ?? ""}
       />
     </AppShell>
   );

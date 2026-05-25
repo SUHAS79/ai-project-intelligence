@@ -5,8 +5,11 @@ import Link from "next/link";
 import {
   AlertTriangle, CheckCircle2, Clock, AlertCircle, Minus,
   ClipboardCheck, Timer, TrendingUp, Users, ArrowRight, Filter,
+  UserCheck, X,
 } from "lucide-react";
 import { cn, STATUS_CONFIG, PRIORITY_CONFIG, formatDate, formatHours } from "@/lib/utils";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -40,9 +43,17 @@ interface UnassignedTask {
   project: { id: string; name: string };
 }
 
+interface Candidate {
+  id: string;
+  fullName: string;
+  initials: string;
+  role: string;
+}
+
 interface WorkloadViewProps {
   developers: DeveloperWorkload[];
   unassignedTasks: UnassignedTask[];
+  allCandidates?: Candidate[];  // all non-manager users for reassignment
 }
 
 // ─── Workload scoring ────────────────────────────────────────────────────────
@@ -80,9 +91,23 @@ const ROLE_LABEL: Record<string, string> = {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function WorkloadView({ developers, unassignedTasks }: WorkloadViewProps) {
+interface ReassignTarget {
+  taskId: string;
+  taskTitle: string;
+  currentDevId: string;
+}
+
+const ROLE_LABEL_MAP: Record<string, string> = {
+  manager: "Manager",
+  senior_developer: "Senior Dev",
+  developer: "Developer",
+};
+
+export function WorkloadView({ developers, unassignedTasks, allCandidates = [] }: WorkloadViewProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<WorkloadLevel | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [reassignTarget, setReassignTarget] = useState<ReassignTarget | null>(null);
 
   const sorted = [...developers].sort((a, b) => {
     const order: WorkloadLevel[] = ["overloaded", "heavy", "balanced", "light", "idle"];
@@ -320,6 +345,17 @@ export function WorkloadView({ developers, unassignedTasks }: WorkloadViewProps)
                               >
                                 {task.project.name}
                               </Link>
+                              {/* Reassign button — shown for overloaded/heavy devs */}
+                              {(level === "overloaded" || level === "heavy") && allCandidates.length > 0 && (
+                                <button
+                                  onClick={() => setReassignTarget({ taskId: task.id, taskTitle: task.title, currentDevId: dev.id })}
+                                  className="shrink-0 flex items-center gap-1 text-[10px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200 transition-colors"
+                                  title="Reassign this task"
+                                >
+                                  <UserCheck className="w-3 h-3" />
+                                  Reassign
+                                </button>
+                              )}
                             </div>
                           );
                         })
@@ -337,6 +373,19 @@ export function WorkloadView({ developers, unassignedTasks }: WorkloadViewProps)
           })
         )}
       </div>
+
+      {/* Reassign modal */}
+      {reassignTarget && (
+        <ReassignModal
+          target={reassignTarget}
+          candidates={allCandidates.filter((c) => c.id !== reassignTarget.currentDevId)}
+          onClose={() => setReassignTarget(null)}
+          onReassigned={() => {
+            setReassignTarget(null);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Unassigned tasks */}
       {unassignedTasks.length > 0 && (
@@ -422,6 +471,106 @@ function StatPill({
     <div className="flex items-center gap-1" title={label}>
       <span className={color}>{icon}</span>
       <span className={cn("text-sm font-semibold tabular-nums", color)}>{display}</span>
+    </div>
+  );
+}
+
+// ─── Reassign Modal ──────────────────────────────────────────────────────────
+
+function ReassignModal({
+  target,
+  candidates,
+  onClose,
+  onReassigned,
+}: {
+  target: ReassignTarget;
+  candidates: Candidate[];
+  onClose: () => void;
+  onReassigned: () => void;
+}) {
+  const [selected, setSelected] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleReassign() {
+    if (!selected) { setError("Select a developer first."); return; }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${target.taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedToId: selected }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error ?? "Failed to reassign");
+        return;
+      }
+      toast.success("Task reassigned successfully");
+      onReassigned();
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Reassign Task</h2>
+            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{target.taskTitle}</p>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">{error}</div>
+          )}
+
+          {candidates.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-4">No other developers available.</p>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">Reassign to</label>
+                <select
+                  value={selected}
+                  onChange={(e) => setSelected(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="">— Choose developer —</option>
+                  {candidates.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.fullName} ({ROLE_LABEL_MAP[c.role] ?? c.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReassign}
+                  disabled={loading || !selected}
+                  className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg disabled:opacity-60"
+                >
+                  {loading ? "Reassigning…" : "Reassign"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

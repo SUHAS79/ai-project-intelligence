@@ -8,6 +8,7 @@ import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { TaskModal } from "../TaskModal";
 import { RejectTaskModal } from "../RejectTaskModal";
+import { TaskCommentThread } from "../TaskCommentThread";
 import {
   STATUS_CONFIG,
   PRIORITY_CONFIG,
@@ -31,6 +32,7 @@ import {
   Timer,
   ChevronDown,
   ChevronUp,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -70,6 +72,7 @@ interface TasksTabProps {
   allUsers?: AssignedUser[];
   userRole?: string;
   isManager?: boolean;
+  currentUserId?: string;
 }
 
 const STATUS_FILTER_LABELS: Record<string, string> = {
@@ -96,6 +99,7 @@ export function TasksTab({
   allUsers = [],
   userRole = "manager",
   isManager = false,
+  currentUserId = "",
 }: TasksTabProps) {
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -105,6 +109,8 @@ export function TasksTab({
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [reopeningId, setReopeningId] = useState<string | null>(null);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
+  const [commentTaskId, setCommentTaskId] = useState<string | null>(null);
+  const commentTask = tasks.find((t) => t.id === commentTaskId) ?? null;
 
   const canReview = isManager || userRole === "senior_developer";
 
@@ -462,6 +468,15 @@ export function TasksTab({
                             </button>
                           )}
 
+                          {/* Task comment thread */}
+                          <button
+                            onClick={() => setCommentTaskId(task.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                            title="Open task thread"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
+
                           {/* Activity log toggle */}
                           {task.activities && task.activities.length > 0 && (
                             <button
@@ -565,6 +580,14 @@ export function TasksTab({
             router.refresh();
             toast.success("Task sent back with feedback");
           }}
+        />
+      )}
+      {commentTask && (
+        <TaskCommentThread
+          taskId={commentTask.id}
+          taskTitle={commentTask.title}
+          currentUserId={currentUserId}
+          onClose={() => setCommentTaskId(null)}
         />
       )}
     </div>

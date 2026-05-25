@@ -274,6 +274,28 @@
 - [x] Click section header to expand; click any account row to quick-fill email + password
 - [x] Accordion: expanding a section collapses the previously open one
 
+## ✅ Feature 11 — Dev + Senior Dev Project Workspace (Completed 2026-05-25)
+- [x] Feature A: `/dev/projects` page — project cards for user's assigned projects (health, progress, manager, team count, dates)
+- [x] Feature A: "My Projects" link added to DEV_NAV in Sidebar.tsx
+- [x] Feature A: proxy.ts updated — `/projects/[id]` now allowed for all roles; only `/projects` list stays manager-only
+- [x] Feature B: Team tab read-only for dev/senior; role badges (ROLE_COLORS + ROLE_LABELS) clearly identify PM / Senior Dev / Dev
+- [x] Feature C: `TaskComment` model + migration (`add-chat-models`)
+- [x] Feature C: `GET/POST /api/tasks/[id]/comments` — auth required; POST verifies task exists
+- [x] Feature C: `TaskCommentThread` modal — message bubbles (violet=mine, slate=others), grouped, timestamps, role badge, Enter to send
+- [x] Feature C: 💬 button on every task row in TasksTab (all roles); `currentUserId` prop threaded through ProjectHub → TasksTab → modal
+- [x] Feature D: `ProjectMessage` model + migration; `GET/POST /api/projects/[id]/messages` with membership guard for non-managers
+- [x] Feature D: `ChatTab` — polling every 5s, bubble UI, role badge per sender, grouped messages, Enter=send, Shift+Enter=newline
+- [x] Feature D: "Chat" tab added to ProjectHub tab bar
+- [x] Feature E: "Reassign" button on task rows for overloaded/heavy devs in WorkloadView expanded view
+- [x] Feature E: `ReassignModal` — select dropdown of all other devs/senior devs; calls PUT /api/tasks/[id]; toast + refresh on success
+- [x] Feature F: "Thread" button on escalation cards (when task attached) → opens TaskCommentThread for the escalation's task
+- [x] Feature G: `EscalationsTab` — fetches all escalations filtered to current project; shows EscalationsSection + "New Escalation" for dev/senior
+- [x] Feature G: "Escalations" tab added to ProjectHub (between Chat and AI Insights)
+- [x] Seed: 14 project chat messages + 9 task comments with realistic team conversations
+- [x] Seed cleanup order updated to include `taskComment` + `projectMessage` deleteMany
+- [x] 0 TypeScript errors; `npm run seed` tested successfully
+- [x] CLAUDE.md + docs/roadmap.md + todo.md updated
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

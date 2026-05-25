@@ -5,6 +5,7 @@ import { AlertTriangle, MessageSquare, CheckCircle2, Clock, ChevronDown, Chevron
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { RespondEscalationModal } from "./RespondEscalationModal";
+import { TaskCommentThread } from "./TaskCommentThread";
 import { useRouter } from "next/navigation";
 
 interface EscalationFull {
@@ -58,6 +59,7 @@ export function EscalationsSection({
   const [respondingTo, setRespondingTo] = useState<EscalationFull | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [contactTask, setContactTask] = useState<{ id: string; title: string } | null>(null);
 
   const canRespond = userRole === "manager" || userRole === "senior_developer";
 
@@ -152,6 +154,17 @@ export function EscalationsSection({
                       Respond
                     </button>
                   )}
+                  {/* Contact sender — open task thread if escalation has a task */}
+                  {esc.task && (
+                    <button
+                      onClick={() => setContactTask({ id: esc.task!.id, title: esc.task!.title })}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition-colors"
+                      title="Open task thread to contact sender"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      Thread
+                    </button>
+                  )}
                   {(isOwn || userRole === "manager") && esc.status === "OPEN" && (
                     <button
                       onClick={() => handleDelete(esc.id)}
@@ -215,6 +228,14 @@ export function EscalationsSection({
             setRespondingTo(null);
             router.refresh();
           }}
+        />
+      )}
+      {contactTask && (
+        <TaskCommentThread
+          taskId={contactTask.id}
+          taskTitle={contactTask.title}
+          currentUserId={userId}
+          onClose={() => setContactTask(null)}
         />
       )}
     </>

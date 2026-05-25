@@ -42,11 +42,12 @@ app/
   login/page.tsx          Standalone login page (accordion demo accounts for all 19 users)
   page.tsx                Manager dashboard (server, force-dynamic)
   dev/page.tsx            Developer dashboard (server, force-dynamic)
+  dev/projects/page.tsx   Dev project list — projects user is assigned to (Feature A)
   team/page.tsx           [DEPRECATED — replaced by /people]
   people/page.tsx         Manager-only people management (fetches users + memberships + projects)
   profile/page.tsx        Profile + password change (all roles)
-  projects/[id]/page.tsx  Project hub (server, awaits params, fetches project+insights)
-  workload/page.tsx       Manager-only team capacity view
+  projects/[id]/page.tsx  Project hub (server, awaits params, fetches project+insights, passes currentUserId)
+  workload/page.tsx       Manager-only team capacity view (now passes allCandidates for reassignment)
   meetings/page.tsx       Meeting list + Jitsi join — all authenticated roles
   availability/page.tsx   Availability/holiday calendar — all authenticated roles
   api/
@@ -61,8 +62,10 @@ app/
     projects/[id]/risks/  GET/POST
     projects/[id]/report/ GET → WeeklyReport JSON
     projects/[id]/members/ GET/POST/DELETE — project membership
+    projects/[id]/messages/ GET/POST — project group chat (Feature D)
     tasks/[id]/           GET/PUT/DELETE
     tasks/[id]/review/    POST (submit) | PATCH (approve/reject/reopen)
+    tasks/[id]/comments/  GET/POST — per-task comment thread (Feature C)
     risks/[id]/           GET/PUT/DELETE
     reviews/              GET → IN_REVIEW queue (senior dev scoped to their projects, manager sees all)
     escalations/          GET (scoped by role) | POST (create escalation)
@@ -77,7 +80,7 @@ app/
 components/
   Sidebar.tsx             Nav sidebar (NAMO brand, slate-950 bg, 232px)
   AppShell.tsx            Client shell wrapping Sidebar + main content
-  ProjectHub.tsx          Tabbed project view (Tasks | Forecast | Timeline | Risks | AI Insights | Report)
+  ProjectHub.tsx          Tabbed project view (Tasks | Forecast | Timeline | Risks | Team | Chat | Escalations | AI Insights | Report)
   DashboardClient.tsx     Dashboard with MetricCards + project grid
   ProjectCard.tsx         Health-colored card in project list
   ProjectModal.tsx        Create/edit project modal
@@ -85,7 +88,8 @@ components/
   RiskModal.tsx           Create/edit risk modal
   EscalateModal.tsx       Developer/senior sends escalation (task context + message + target)
   RespondEscalationModal.tsx  Manager/senior dev responds or resolves an escalation
-  EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards)
+  EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards); has "Thread" button per escalation if task attached
+  TaskCommentThread.tsx   Modal dialog for per-task comment thread (Feature C)
   PortfolioReportModal.tsx  Manager-only cross-project report modal (period toggle, health table, copy)
   MeetingsClient.tsx      Meeting list with Live Now/Scheduled/Past sections + Instant Meeting CTA
   CreateMeetingModal.tsx  Create meeting form (title, optional project, optional scheduled time)
@@ -94,12 +98,14 @@ components/
   EmployeeModal.tsx       Create/edit employee modal
   HealthScore.tsx         Visual health score gauge component
   tabs/
-    TasksTab.tsx          Task table with inline status select, filter pills
+    TasksTab.tsx          Task table with inline status select, filter pills, comment thread button (💬)
     ForecastTab.tsx       Burndown + velocity charts (recharts)
     GanttTab.tsx          Custom SVG Gantt chart (NOT gantt-task-react)
     RisksTab.tsx          Risk register with severity-sorted cards
     InsightsTab.tsx       AI narrative UX — "why at risk", recommendations
     ReportTab.tsx         Weekly report with copy-to-clipboard
+    ChatTab.tsx           Project group chat — polling /api/projects/[id]/messages, message bubbles (Feature D)
+    EscalationsTab.tsx    Per-project escalation list + "New Escalation" for dev/senior (Feature G)
   ui/
     Button.tsx Badge.tsx  Primitive UI components
 
@@ -111,8 +117,8 @@ lib/
   utils.ts                cn(), formatDate(), daysFromNow(), STATUS_CONFIG, etc.
 
 prisma/
-  schema.prisma           DB schema (Prisma v7 syntax)
-  seed.ts                 Demo data seeder (19 users, 3 projects, 30 tasks, 36 deps, 18 activities, 8 risks, 6 escalations, 15 availability, 7 meetings)
+  schema.prisma           DB schema (Prisma v7 syntax — 21 models including TaskComment + ProjectMessage)
+  seed.ts                 Demo data seeder (19 users, 3 projects, 30 tasks, 36 deps, 18 activities, 8 risks, 6 escalations, 15 availability, 7 meetings, 14 chat msgs, 9 task comments)
   migrations/             Auto-generated migration files
 ```
 
@@ -328,3 +334,89 @@ await prisma.user.deleteMany();
 - Root cause: Prisma returns `Date` objects; `parseISO()` in `MeetingCard` expects a string
 - Fix: meetings page now explicitly calls `.toISOString()` on all Date fields before passing to client
 - Also: switched to `Promise.all` for parallel fetching of meetings + projects; added `scheduledAt` to orderBy
+
+## Dev + Senior Dev Workspace Upgrade (completed 2026-05-25)
+
+Features A–G: transformed the developer and senior developer experience into a proper project workspace.
+
+### Feature A — My Projects page (`/dev/projects`)
+- New page listing all projects the current user is assigned to
+- Cards show: name, description, health score, progress bar (done/total tasks), manager name, team count, due date, days remaining/overdue
+- Clicking a card goes to `/projects/[id]` — the full project workspace
+- "My Projects" added to `DEV_NAV` in Sidebar.tsx
+- `app/dev/projects/page.tsx` uses `computeInsights` to compute health per project
+
+### Feature B — Team visibility in project workspace
+- `TeamTab.tsx` shows all team members with role badges (ROLE_COLORS + ROLE_LABELS)
+- Manager role clearly distinguished with violet badge; senior dev with blue; developer with slate
+- Task stats per member (Done/In Progress/Blocked/Todo counts)
+- Read-only view for non-managers (no Add Member / Remove buttons shown)
+
+### Feature C — Per-task comment thread
+- New `TaskComment` Prisma model (taskId, userId, userFullName, userRole, userInitials, body, createdAt)
+- `GET/POST /api/tasks/[id]/comments` — auth required; POST verifies task exists
+- `TaskCommentThread` component: full-screen modal with message bubbles (isMine = violet/right, others = slate/left), grouped messages, Enter to send
+- Comment (💬) button added to every task row in `TasksTab` — visible for all roles
+- `currentUserId` prop threaded: project page → ProjectHub → TasksTab → TaskCommentThread
+- 9 seed comments across 4 tasks demonstrating real collaboration threads
+
+### Feature D — Project group chat
+- New `ProjectMessage` Prisma model (projectId, userId, userFullName, userRole, userInitials, body, createdAt)
+- `GET/POST /api/projects/[id]/messages` — membership verified; managers always have access
+- `ChatTab` component: polls every 5s, message bubbles with role badges, grouped messages, Enter to send
+- "Chat" tab added between Team and AI Insights in ProjectHub
+- 14 seed messages across 3 projects with realistic team conversations
+
+### Feature E — Workload inline reassignment
+- "Reassign" button appears on task rows in expanded dev card view, for overloaded/heavy workload levels
+- `ReassignModal` (inline in WorkloadView.tsx): select dropdown of all other devs/senior devs, calls `PUT /api/tasks/[id]` with `{ assignedToId }`
+- `allCandidates` prop added to WorkloadView; workload page passes all non-manager active users
+- On success: toast + router.refresh() — capacity view updates immediately
+
+### Feature F — Escalation contact action
+- "Thread" button on escalation cards in `EscalationsSection` when `esc.task` exists
+- Opens `TaskCommentThread` for that task — allows direct communication between escalation sender and responder
+- Works for all roles (developer, senior_developer, manager)
+
+### Feature G — Complete project workspace for devs/seniors
+- "Escalations" tab added to ProjectHub (between Chat and AI Insights)
+- `EscalationsTab` component: fetches `/api/escalations` and filters to current project; shows EscalationsSection + "New Escalation" button for dev/senior
+- Proxy updated: `/projects/[id]` now accessible to all authenticated roles (was manager-only); only `/projects` (the list) remains manager-only
+- Combined result: dev/senior opening a project sees: Tasks (with comments + approve/reject if senior), Forecast, Timeline, Risks, Team, Chat, Escalations, AI Insights, Report
+
+### New Prisma models
+```prisma
+model TaskComment {
+  id           String   @id @default(cuid())
+  taskId       String
+  userId       String
+  userFullName String
+  userRole     String
+  userInitials String
+  body         String
+  createdAt    DateTime @default(now())
+  task Task @relation(...)
+  user User @relation(...)
+}
+
+model ProjectMessage {
+  id           String   @id @default(cuid())
+  projectId    String
+  userId       String
+  userFullName String
+  userRole     String
+  userInitials String
+  body         String
+  createdAt    DateTime @default(now())
+  project Project @relation(...)
+  user    User    @relation(...)
+}
+```
+
+### Seed cleanup update (must include new models)
+```ts
+await prisma.taskComment.deleteMany();
+await prisma.projectMessage.deleteMany();
+await prisma.taskActivity.deleteMany();
+// ... rest unchanged
+```

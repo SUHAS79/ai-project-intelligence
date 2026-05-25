@@ -197,6 +197,22 @@
 - [x] Password hint shown in section header; click any account to quick-fill email + password
 - [x] Accordion behavior: expanding one section collapses the previous
 
+### Feature 11 — Dev + Senior Dev Project Workspace ✅ (2026-05-25)
+- [x] Feature A: `/dev/projects` page — lists user's assigned projects with health, progress, manager, team count, due date
+- [x] Feature A: "My Projects" added to DEV_NAV in Sidebar (between My Dashboard and Calendar)
+- [x] Feature A: Proxy updated — `/projects/[id]` now accessible to all authenticated roles; only `/projects` list stays manager-only
+- [x] Feature B: Team tab is read-only for dev/senior (role badges already visible via ROLE_LABELS + ROLE_COLORS)
+- [x] Feature C: `TaskComment` Prisma model + migration; `GET/POST /api/tasks/[id]/comments`; `TaskCommentThread` modal component
+- [x] Feature C: Comment (💬) button on every task row in TasksTab for all roles; `currentUserId` threaded through ProjectHub → TasksTab
+- [x] Feature D: `ProjectMessage` Prisma model + migration; `GET/POST /api/projects/[id]/messages` with membership guard
+- [x] Feature D: `ChatTab` component — polls every 5s, message bubbles, role badge per sender, grouped messages, Enter to send
+- [x] Feature D: "Chat" tab added to ProjectHub (between Team and AI Insights)
+- [x] Feature E: "Reassign" button on task rows in WorkloadView for overloaded/heavy devs; `ReassignModal` with candidate select + immediate refresh
+- [x] Feature F: "Thread" button on escalation cards when task is attached; opens TaskCommentThread for direct communication
+- [x] Feature G: `EscalationsTab` component — project-scoped escalation list + "New Escalation" for dev/senior; added as 7th tab in ProjectHub
+- [x] Seed: 14 project chat messages + 9 task comments across all 3 projects; cleanup updated for new models
+- [x] CLAUDE.md, docs/roadmap.md, todo.md updated
+
 ---
 
 ## Next Priorities (Phase 3)

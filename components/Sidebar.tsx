@@ -30,10 +30,11 @@ const MANAGER_NAV = [
 ];
 
 const DEV_NAV = [
-  { href: "/dev",          label: "My Dashboard", icon: LayoutDashboard },
-  { href: "/availability", label: "Calendar",     icon: CalendarDays },
-  { href: "/meetings",     label: "Meetings",     icon: Video },
-  { href: "/profile",      label: "Profile",      icon: User },
+  { href: "/dev",              label: "My Dashboard", icon: LayoutDashboard },
+  { href: "/dev/projects",     label: "My Projects",  icon: FolderOpen },
+  { href: "/availability",     label: "Calendar",     icon: CalendarDays },
+  { href: "/meetings",         label: "Meetings",     icon: Video },
+  { href: "/profile",          label: "Profile",      icon: User },
 ];
 
 interface SidebarProps {

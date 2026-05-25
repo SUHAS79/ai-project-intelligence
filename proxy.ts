@@ -20,7 +20,8 @@ function isPublicPath(pathname: string): boolean {
 function isManagerOnlyPath(pathname: string): boolean {
   return (
     pathname === "/" ||
-    pathname.startsWith("/projects") ||
+    pathname === "/projects" ||        // manager project list — restricted
+    // /projects/[id] is accessible to ALL authenticated users (devs need it too)
     pathname.startsWith("/people") ||
     pathname.startsWith("/workload") ||
     pathname.startsWith("/api/users")
