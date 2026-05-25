@@ -199,13 +199,15 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            {/* Health score */}
-            <div className="flex flex-col items-center px-4 py-2 bg-slate-50 rounded-xl border border-slate-200">
-              <span className={`text-xl font-bold tabular-nums ${healthColor}`}>
-                {insights.healthScore}
-              </span>
-              <span className="text-[10px] text-slate-400 uppercase tracking-wide">Health</span>
-            </div>
+            {/* Health score — manager only */}
+            {isManager && (
+              <div className="flex flex-col items-center px-4 py-2 bg-slate-50 rounded-xl border border-slate-200">
+                <span className={`text-xl font-bold tabular-nums ${healthColor}`}>
+                  {insights.healthScore}
+                </span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wide">Health</span>
+              </div>
+            )}
             {/* Export .ics — available to all roles */}
             <a
               href={`/api/projects/${project.id}/export/ics`}
