@@ -301,6 +301,19 @@
 - [x] No schema changes — uses existing `submittedForReviewAt` (Task) and `createdAt` (Escalation)
 - [x] 0 TypeScript errors
 
+### Feature 17 — Global Search ✅ (2026-05-25)
+- [x] `GET /api/search?q=` — role-scoped search; results capped at 6 per category
+  - Manager: all projects, all tasks, all people
+  - Dev/Senior: member projects, own assigned tasks; no people search
+- [x] `GlobalSearch` component — command-palette modal (⌘K shortcut + custom event `namo:search:open`)
+  - 300ms debounced; 2-char minimum; idle / typing / no-results states
+  - Results in grouped sections: Projects · Tasks · People
+  - Status chip (project/task), priority chip (task), role chip (person) on every row
+  - Click to navigate; ESC or backdrop click to close; keyboard hints in footer
+- [x] Sidebar: "Search…" button with ⌘K badge above nav links
+- [x] Mobile top bar: search icon dispatches open event
+- [x] `GlobalSearch` rendered once at shell level in `AppShellClient`
+
 ---
 
 ## Next Priorities (Phase 3)

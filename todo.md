@@ -414,6 +414,21 @@
 - [x] No schema changes needed — uses existing fields
 - [x] 0 TypeScript errors; commit: 5792df9
 
+## ✅ Feature 17 — Global Search (Completed 2026-05-25)
+- [x] `GET /api/search?q=` — role-scoped; min 2 chars; max 6 results per category
+  - Manager: all projects + all tasks + all users
+  - Dev/Senior: member projects + own assigned tasks; no people results
+- [x] `components/GlobalSearch.tsx` — command-palette modal
+  - `Cmd/Ctrl+K` global keyboard shortcut; also responds to `CustomEvent("namo:search:open")`
+  - 300ms debounced fetch; idle state / "keep typing" / no-results states
+  - Results grouped: Projects · Tasks · People; status/priority/role chips on each result
+  - Click result → navigate to relevant page + close
+  - ESC or click backdrop to close; footer shows keyboard hints
+- [x] Sidebar: "Search…" button with `⌘K` hint above nav items — dispatches open event
+- [x] AppShellClient: search icon button in mobile top bar — dispatches open event
+- [x] `GlobalSearch` rendered once at shell level in AppShellClient
+- [x] 0 TypeScript errors; commit: e285d46
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)
