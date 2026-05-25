@@ -10,20 +10,27 @@ export default async function MeetingsPage() {
   const user = await getUserFromToken();
   if (!user) return null;
 
-  const meetings = await prisma.meeting.findMany({
-    include: {
-      project: { select: { id: true, name: true } },
-      createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
-    },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-  });
+  const [meetingsRaw, projects] = await Promise.all([
+    prisma.meeting.findMany({
+      include: {
+        project: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
+      },
+      orderBy: [{ status: "asc" }, { scheduledAt: "asc" }, { createdAt: "desc" }],
+    }),
+    prisma.project.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  // Projects for the "link to project" dropdown in CreateMeetingModal
-  const projects = await prisma.project.findMany({
-    where: { status: "ACTIVE" },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
+  // Serialize dates → strings so client component receives plain strings, not Date objects
+  const meetings = meetingsRaw.map((m) => ({
+    ...m,
+    scheduledAt: m.scheduledAt?.toISOString() ?? null,
+    createdAt: m.createdAt.toISOString(),
+  }));
 
   return (
     <AppShell>
@@ -43,7 +50,7 @@ export default async function MeetingsPage() {
 
         <MeetingsClient
           user={user}
-          initialMeetings={meetings as any}
+          initialMeetings={meetings}
           projects={projects}
         />
       </div>

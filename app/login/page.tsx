@@ -2,7 +2,38 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Zap, Eye, EyeOff, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+
+const DEMO_ACCOUNTS = [
+  // Managers
+  { role: "Manager", fullName: "Sarah Mitchell",  email: "sarah@namo.dev",  password: "manager123", color: "text-violet-400",  group: "manager" },
+  { role: "Manager", fullName: "Marcus Johnson",  email: "marcus@namo.dev", password: "manager123", color: "text-violet-400",  group: "manager" },
+  { role: "Manager", fullName: "Rachel Chen",     email: "rachel@namo.dev", password: "manager123", color: "text-violet-400",  group: "manager" },
+  // Senior Developers
+  { role: "Senior Dev", fullName: "Alex Rivera",    email: "alex@namo.dev",   password: "senior123",  color: "text-blue-400",   group: "senior" },
+  { role: "Senior Dev", fullName: "Nina Volkov",    email: "nina@namo.dev",   password: "senior123",  color: "text-blue-400",   group: "senior" },
+  { role: "Senior Dev", fullName: "Carlos Mendez",  email: "carlos@namo.dev", password: "senior123",  color: "text-blue-400",   group: "senior" },
+  { role: "Senior Dev", fullName: "Priya Patel",    email: "priya@namo.dev",  password: "senior123",  color: "text-blue-400",   group: "senior" },
+  { role: "Senior Dev", fullName: "Jordan Walsh",   email: "jordan@namo.dev", password: "senior123",  color: "text-blue-400",   group: "senior" },
+  { role: "Senior Dev", fullName: "Yuki Tanaka",    email: "yuki@namo.dev",   password: "senior123",  color: "text-blue-400",   group: "senior" },
+  // Developers
+  { role: "Developer", fullName: "Emma Wilson",   email: "emma@namo.dev",   password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "James Kim",     email: "james@namo.dev",  password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Maria Santos",  email: "maria@namo.dev",  password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Lisa Tran",     email: "lisa@namo.dev",   password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "David Park",    email: "david@namo.dev",  password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Sophie Brown",  email: "sophie@namo.dev", password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Tyler Wright",  email: "tyler@namo.dev",  password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Aisha Okafor",  email: "aisha@namo.dev",  password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Ben Carter",    email: "ben@namo.dev",    password: "dev123",     color: "text-emerald-400", group: "dev" },
+  { role: "Developer", fullName: "Zoe Adams",     email: "zoe@namo.dev",    password: "dev123",     color: "text-emerald-400", group: "dev" },
+];
+
+const GROUPS = [
+  { key: "manager", label: "Managers",         color: "text-violet-400",  count: 3,  password: "manager123" },
+  { key: "senior",  label: "Senior Developers", color: "text-blue-400",   count: 6,  password: "senior123"  },
+  { key: "dev",     label: "Developers",        color: "text-emerald-400", count: 10, password: "dev123"     },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +42,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -44,6 +76,12 @@ export default function LoginPage() {
     }
   }
 
+  function quickFill(acc: typeof DEMO_ACCOUNTS[0]) {
+    setEmail(acc.email);
+    setPassword(acc.password);
+    setError("");
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       {/* Subtle background grid */}
@@ -71,7 +109,6 @@ export default function LoginPage() {
           <p className="text-sm text-slate-400 mb-6">Enter your credentials to continue.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Error */}
             {error && (
               <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 rounded-lg px-3.5 py-3">
                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
@@ -79,11 +116,8 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Email address
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Email address</label>
               <input
                 type="email"
                 value={email}
@@ -95,11 +129,8 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Password
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -116,16 +147,11 @@ export default function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -139,37 +165,63 @@ export default function LoginPage() {
                   </svg>
                   Signing in…
                 </>
-              ) : (
-                "Sign in"
-              )}
+              ) : "Sign in"}
             </button>
           </form>
         </div>
 
-        {/* Demo credentials hint */}
-        <div className="mt-5 bg-slate-900/60 border border-white/[0.06] rounded-xl p-4">
-          <p className="text-xs font-medium text-slate-400 mb-2.5">Demo accounts</p>
-          <div className="space-y-2">
-            {[
-              { role: "Manager", email: "sarah@namo.dev", password: "manager123", color: "text-violet-400" },
-              { role: "Senior Dev", email: "alex@namo.dev", password: "senior123", color: "text-blue-400" },
-              { role: "Developer", email: "emma@namo.dev", password: "dev123", color: "text-emerald-400" },
-            ].map((demo) => (
-              <button
-                key={demo.email}
-                type="button"
-                onClick={() => {
-                  setEmail(demo.email);
-                  setPassword(demo.password);
-                  setError("");
-                }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-white/[0.04] hover:border-white/10 transition-all group text-left"
-              >
-                <span className={`text-xs font-semibold ${demo.color}`}>{demo.role}</span>
-                <span className="text-xs text-slate-500 group-hover:text-slate-400 font-mono transition-colors">{demo.email}</span>
-              </button>
-            ))}
-          </div>
+        {/* Demo accounts */}
+        <div className="mt-5 bg-slate-900/60 border border-white/[0.06] rounded-xl overflow-hidden">
+          <p className="text-xs font-medium text-slate-400 px-4 pt-3.5 pb-2.5">
+            Demo accounts — click any to quick-fill
+          </p>
+
+          {GROUPS.map((group) => {
+            const accounts = DEMO_ACCOUNTS.filter((a) => a.group === group.key);
+            const isOpen = expandedGroup === group.key;
+
+            return (
+              <div key={group.key} className="border-t border-white/[0.04]">
+                {/* Group header */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedGroup(isOpen ? null : group.key)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold ${group.color}`}>{group.label}</span>
+                    <span className="text-[10px] text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded-full font-mono">
+                      {group.count}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-600 font-mono">{group.password}</span>
+                    {isOpen
+                      ? <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                      : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                    }
+                  </div>
+                </button>
+
+                {/* Account list */}
+                {isOpen && (
+                  <div className="px-3 pb-3 space-y-1">
+                    {accounts.map((acc) => (
+                      <button
+                        key={acc.email}
+                        type="button"
+                        onClick={() => quickFill(acc)}
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-white/[0.04] hover:border-white/10 transition-all text-left"
+                      >
+                        <span className="text-xs font-medium text-white/80">{acc.fullName}</span>
+                        <span className="text-[10px] text-slate-500 font-mono shrink-0">{acc.email}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-4">
