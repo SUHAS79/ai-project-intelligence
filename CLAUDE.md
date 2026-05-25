@@ -258,7 +258,7 @@ Other seed data:
 - 8 risks across projects (OPEN + MITIGATING)
 - 6 escalations (OPEN / RESPONDED / RESOLVED — covering all roles)
 - 15 availability entries (company holidays, approved/pending vacations, sick, WFH, partial)
-- 7 meetings (5 scheduled, 2 ended; project-linked + general)
+- 8 meetings (6 team + 2 individual; 5 scheduled, 3 ended; project-linked)
 
 Seed cleanup order (safe for all FK constraints):
 ```ts
@@ -473,6 +473,18 @@ await prisma.projectMessage.deleteMany();
 await prisma.taskActivity.deleteMany();
 // ... rest unchanged
 ```
+
+## Meeting Queries & Chat Fix (completed 2026-05-25)
+
+### Root cause — stale Prisma singleton
+`lib/prisma.ts` stores the Prisma client on `globalThis`. If the server was started **before** `npx prisma generate` ran (e.g., before the `add-meeting-type` migration), the singleton holds the old client (without `participant`) for the life of the process. Hot-reload does NOT recreate it. Fix: kill the server process and restart — the new process imports the correct generated client.
+
+### Files changed
+- **`app/api/meetings/[id]/route.ts`** — added `participant` to its local `MEETING_INCLUDE` (was missing; `route.ts` in `[id]/` has its own constant separate from `meetings/route.ts`)
+- **`components/tabs/ChatTab.tsx`** — split `fetchError` / `sendError` states; fetch 403 → "You are not a member of this project's chat." with `AlertCircle` icon; other errors → human-readable messages; compose textarea and send button disabled when `fetchError` is set
+
+### Gotcha to remember
+Any time a new Prisma relation is added and `npx prisma generate` is run, the dev server **must be fully killed and restarted**. `next dev` hot-reload does not re-execute `lib/prisma.ts`; the singleton on `globalThis` is frozen for the process lifetime.
 
 ## Collaboration Flows Refactor (completed 2026-05-25)
 

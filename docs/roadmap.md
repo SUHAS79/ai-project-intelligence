@@ -262,6 +262,12 @@
 - [x] Dev/senior project listing shows only user-relevant data (no analytics)
 - [x] Meeting creation scoped to accessible projects per role
 
+### Fix — Meeting Queries, Project Chat & Dev Views ✅ (2026-05-25)
+- [x] `app/api/meetings/[id]/route.ts`: `participant` added to local `MEETING_INCLUDE` — was missing, causing `PrismaClientValidationError: Unknown field 'participant'` at runtime
+- [x] Root cause: `lib/prisma.ts` Prisma singleton on `globalThis` caches old client (pre-migration); fix = kill + restart server after `npx prisma generate`
+- [x] `ChatTab.tsx`: split `fetchError` / `sendError` states; 403 shows "You are not a member of this project's chat." with AlertCircle icon; compose input disabled when fetch fails
+- [x] 0 TypeScript errors; dev server started clean
+
 ---
 
 ## Next Priorities (Phase 3)

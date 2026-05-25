@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const MEETING_INCLUDE = {
-  project: { select: { id: true, name: true } },
-  createdBy: { select: { id: true, fullName: true, initials: true, role: true } },
+  project:     { select: { id: true, name: true } },
+  createdBy:   { select: { id: true, fullName: true, initials: true, role: true } },
+  participant: { select: { id: true, fullName: true, initials: true, role: true } },
 } as const;
 
 // PATCH /api/meetings/[id] — update status (active | ended) or details

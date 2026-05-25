@@ -349,6 +349,12 @@
 - [x] Meetings: project-first creation; dev/senior can only create meetings for their projects
 - [x] 0 TypeScript errors; build passes
 
+## ✅ Fix — Meeting Queries, Project Chat & Dev Views (Completed 2026-05-25)
+- [x] `app/api/meetings/[id]/route.ts`: added `participant` to local `MEETING_INCLUDE` (was missing — caused `PrismaClientValidationError: Unknown field 'participant'`)
+- [x] Root cause identified: `lib/prisma.ts` global singleton caches old Prisma client on `globalThis`; server must be fully restarted after `npx prisma generate` for new relations to take effect
+- [x] `components/tabs/ChatTab.tsx`: separate `fetchError` + `sendError` states; 403 → "You are not a member of this project's chat."; AlertCircle icon on fetch error; compose disabled when access denied
+- [x] 0 TypeScript errors confirmed; server restarted clean
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

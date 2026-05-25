@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, ROLE_COLORS } from "@/lib/roles";
@@ -26,23 +26,34 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+  const [sendError, setSendError] = useState("");
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}/messages`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status === 403) {
+          setFetchError("You are not a member of this project's chat.");
+        } else {
+          setFetchError("Failed to load messages.");
+        }
+        return;
+      }
       const data = await res.json();
-      setMessages(data.messages ?? []);
+      setFetchError(""); // clear any prior error on success
+      setMessages(Array.isArray(data.messages) ? data.messages : []);
+    } catch {
+      setFetchError("Network error loading messages.");
     } finally {
       setLoading(false);
     }
   }, [projectId]);
 
-  // Poll every 5 seconds
+  // Load once, then poll every 5 seconds
   useEffect(() => {
     fetchMessages();
     intervalRef.current = setInterval(fetchMessages, 5000);
@@ -59,8 +70,8 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     const text = body.trim();
-    if (!text) return;
-    setError("");
+    if (!text || sending) return;
+    setSendError("");
     setSending(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/messages`, {
@@ -69,15 +80,15 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
         body: JSON.stringify({ body: text }),
       });
       if (!res.ok) {
-        const d = await res.json();
-        setError(d.error ?? "Failed to send");
+        const d = await res.json().catch(() => ({}));
+        setSendError(d.error ?? "Failed to send message.");
         return;
       }
       setBody("");
-      // Refresh immediately
+      // Fetch immediately so the sent message appears without waiting for next poll
       await fetchMessages();
     } catch {
-      setError("Something went wrong");
+      setSendError("Network error. Please try again.");
     } finally {
       setSending(false);
     }
@@ -101,6 +112,11 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
         {loading ? (
           <div className="flex items-center justify-center h-24">
             <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : fetchError ? (
+          <div className="flex flex-col items-center justify-center h-24 text-center gap-2">
+            <AlertCircle className="w-6 h-6 text-red-400" />
+            <p className="text-sm text-red-600 font-medium">{fetchError}</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-24 text-center">
@@ -128,9 +144,7 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
                 {!isGrouped ? (
                   <div className={cn(
                     "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5",
-                    isMine
-                      ? "bg-violet-600 text-white"
-                      : "bg-slate-200 text-slate-600"
+                    isMine ? "bg-violet-600 text-white" : "bg-slate-200 text-slate-600"
                   )}>
                     {msg.userInitials}
                   </div>
@@ -178,8 +192,8 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
 
       {/* Compose */}
       <form onSubmit={handleSend} className="bg-white rounded-xl border border-slate-200/80 shadow-sm">
-        {error && (
-          <p className="text-xs text-red-600 px-3 pt-2 -mb-1">{error}</p>
+        {sendError && (
+          <p className="text-xs text-red-600 px-3 pt-2 -mb-1">{sendError}</p>
         )}
         <div className="flex items-end gap-2 p-2">
           <textarea
@@ -188,17 +202,18 @@ export function ChatTab({ projectId, currentUserId, currentUserRole }: ChatTabPr
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (body.trim()) handleSend(e as any);
+                if (body.trim() && !sending) handleSend(e as any);
               }
             }}
             placeholder="Message the team… (Enter to send, Shift+Enter for newline)"
             rows={1}
-            className="flex-1 resize-none text-sm text-slate-800 placeholder:text-slate-400 border-0 outline-none bg-transparent px-2 py-1.5 leading-relaxed"
+            disabled={!!fetchError}
+            className="flex-1 resize-none text-sm text-slate-800 placeholder:text-slate-400 border-0 outline-none bg-transparent px-2 py-1.5 leading-relaxed disabled:opacity-50"
             style={{ maxHeight: "120px", overflowY: "auto" }}
           />
           <button
             type="submit"
-            disabled={sending || !body.trim()}
+            disabled={sending || !body.trim() || !!fetchError}
             className="shrink-0 w-9 h-9 rounded-lg bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? (
