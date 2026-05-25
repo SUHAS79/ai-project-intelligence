@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectModal } from "./ProjectModal";
 import { Button } from "./ui/Button";
-import { Plus, FolderOpen, TrendingDown, ShieldAlert, CheckCircle2, Zap, Target, Siren, FileText } from "lucide-react";
+import { Plus, FolderOpen, TrendingDown, ShieldAlert, CheckCircle2, Zap, Target, Siren, FileText, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { Project, Risk } from "@/app/generated/prisma/client";
 import type { ProjectInsights } from "@/lib/insights";
 import { getHealthColor } from "@/lib/utils";
 import { EscalationsSection } from "./EscalationsSection";
 import { PortfolioReportModal } from "./PortfolioReportModal";
+import { TemplatesModal } from "./TemplatesModal";
 
 type ProjectWithInsights = Project & {
   tasks: any[];
@@ -45,6 +46,7 @@ export function DashboardClient({
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPortfolioReport, setShowPortfolioReport] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const totalProjects = initialProjects.length;
   const totalTasks = initialProjects.reduce((s, p) => s + p.tasks.length, 0);
@@ -88,6 +90,14 @@ export function DashboardClient({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowTemplates(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Templates</span>
+            <span className="sm:hidden">Templates</span>
+          </button>
           <button
             onClick={() => setShowPortfolioReport(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
@@ -213,6 +223,9 @@ export function DashboardClient({
 
       {showPortfolioReport && (
         <PortfolioReportModal onClose={() => setShowPortfolioReport(false)} />
+      )}
+      {showTemplates && (
+        <TemplatesModal onClose={() => setShowTemplates(false)} />
       )}
     </div>
   );

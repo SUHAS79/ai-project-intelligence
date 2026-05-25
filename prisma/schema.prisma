@@ -31,6 +31,7 @@ model User {
   taskComments         TaskComment[]
   projectMessages      ProjectMessage[]
   notifications        Notification[]
+  createdTemplates     ProjectTemplate[] @relation("TemplateCreator")
 }
 
 model Notification {
@@ -227,6 +228,41 @@ model TaskDependency {
   dependency Task @relation("dependency", fields: [dependencyId], references: [id], onDelete: Cascade)
 
   @@unique([dependentId, dependencyId])
+}
+
+model ProjectTemplate {
+  id           String         @id @default(cuid())
+  name         String
+  description  String?
+  durationDays Int                             // hint for end date when applying
+  createdById  String
+  createdAt    DateTime       @default(now())
+  tasks        TemplateTask[]
+  risks        TemplateRisk[]
+  createdBy    User           @relation("TemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model TemplateTask {
+  id             String          @id @default(cuid())
+  templateId     String
+  title          String
+  description    String?
+  priority       String          @default("MEDIUM")
+  estimatedHours Float?
+  startDayOffset Int             @default(0)   // days from project startDate
+  durationDays   Int             @default(7)   // task duration in days
+  template       ProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model TemplateRisk {
+  id          String          @id @default(cuid())
+  templateId  String
+  title       String
+  description String?
+  probability String          @default("MEDIUM")
+  impact      String          @default("MEDIUM")
+  mitigation  String?
+  template    ProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
 
 model Risk {

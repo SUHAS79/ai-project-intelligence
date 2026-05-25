@@ -31,6 +31,9 @@ async function main() {
   await prisma.meeting.deleteMany();
   await prisma.projectMember.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.templateTask.deleteMany();
+  await prisma.templateRisk.deleteMany();
+  await prisma.projectTemplate.deleteMany();
   await prisma.user.deleteMany();
 
   // ─── Date helpers ─────────────────────────────────────────────────────────
@@ -1599,6 +1602,66 @@ async function main() {
     ],
   });
 
+  // ─── Project Templates ────────────────────────────────────────────────────
+  console.log("  Seeding project templates...");
+
+  await prisma.projectTemplate.create({
+    data: {
+      name: "Software Sprint",
+      description: "Standard 2-week agile sprint: discovery, dev tasks, review, and deploy.",
+      durationDays: 14,
+      createdById: sarah.id,
+      tasks: {
+        create: [
+          { title: "Sprint planning & backlog grooming",   priority: "HIGH",     startDayOffset: 0, durationDays: 1 },
+          { title: "Environment setup & branch cut",       priority: "MEDIUM",   startDayOffset: 1, durationDays: 1 },
+          { title: "Feature development — core logic",     priority: "HIGH",     startDayOffset: 2, durationDays: 5, estimatedHours: 20 },
+          { title: "Unit tests & code review",             priority: "HIGH",     startDayOffset: 7, durationDays: 2, estimatedHours: 8 },
+          { title: "QA testing & bug fixes",               priority: "MEDIUM",   startDayOffset: 9, durationDays: 2, estimatedHours: 6 },
+          { title: "Staging deployment & smoke test",      priority: "MEDIUM",   startDayOffset: 11, durationDays: 1 },
+          { title: "Production release & monitoring",      priority: "CRITICAL", startDayOffset: 13, durationDays: 1 },
+        ],
+      },
+      risks: {
+        create: [
+          { title: "Scope creep mid-sprint", probability: "HIGH",   impact: "MEDIUM", mitigation: "Freeze scope after planning; log new requests for next sprint" },
+          { title: "Flaky test environment",  probability: "MEDIUM", impact: "LOW",    mitigation: "Use dedicated CI runner; document known environment quirks" },
+        ],
+      },
+    },
+  });
+
+  await prisma.projectTemplate.create({
+    data: {
+      name: "Product Launch",
+      description: "End-to-end product launch workflow: research through go-live and post-launch review.",
+      durationDays: 45,
+      createdById: marcus.id,
+      tasks: {
+        create: [
+          { title: "Market & competitor research",         priority: "HIGH",     startDayOffset: 0,  durationDays: 5,  estimatedHours: 16 },
+          { title: "Requirements & scope definition",      priority: "HIGH",     startDayOffset: 5,  durationDays: 3,  estimatedHours: 10 },
+          { title: "Design mockups & user flows",          priority: "HIGH",     startDayOffset: 8,  durationDays: 7,  estimatedHours: 24 },
+          { title: "Design review & stakeholder sign-off", priority: "MEDIUM",   startDayOffset: 15, durationDays: 2 },
+          { title: "Backend API development",              priority: "HIGH",     startDayOffset: 17, durationDays: 10, estimatedHours: 40 },
+          { title: "Frontend implementation",              priority: "HIGH",     startDayOffset: 17, durationDays: 12, estimatedHours: 48 },
+          { title: "Integration testing",                  priority: "HIGH",     startDayOffset: 29, durationDays: 5,  estimatedHours: 16 },
+          { title: "Beta user testing & feedback",         priority: "MEDIUM",   startDayOffset: 34, durationDays: 4,  estimatedHours: 8 },
+          { title: "Marketing assets & launch prep",       priority: "MEDIUM",   startDayOffset: 36, durationDays: 5 },
+          { title: "Go-live deployment",                   priority: "CRITICAL", startDayOffset: 44, durationDays: 1 },
+        ],
+      },
+      risks: {
+        create: [
+          { title: "Launch date slippage",         probability: "HIGH",   impact: "HIGH",   mitigation: "Track milestone velocity weekly; flag 2-week risk early and adjust scope" },
+          { title: "Third-party API dependency",   probability: "MEDIUM", impact: "HIGH",   mitigation: "Identify external dependencies in week 1; build fallback stubs" },
+          { title: "Beta feedback causes redesign", probability: "LOW",    impact: "HIGH",   mitigation: "Run design reviews early; treat beta as validation not discovery" },
+          { title: "Insufficient QA time",         probability: "MEDIUM", impact: "MEDIUM", mitigation: "Allocate fixed QA buffer; do not compress test window to recover dev delays" },
+        ],
+      },
+    },
+  });
+
   // ─── Summary ──────────────────────────────────────────────────────────────
   console.log("✅ Seed complete!");
   console.log(`   • Users: 19 (3 managers, 6 senior devs, 10 developers)`);
@@ -1614,6 +1677,7 @@ async function main() {
   console.log(`   • Task comments: 9`);
   console.log(`   • Activity log entries: 36`);
   console.log(`   • Notifications: 21`);
+  console.log(`   • Project templates: 2 (Software Sprint, Product Launch)`);
   console.log(``);
   console.log("🔑 Demo login credentials:");
   console.log("   Manager      → sarah@namo.dev   / manager123");

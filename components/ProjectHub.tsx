@@ -39,6 +39,7 @@ import {
   MessageSquare,
   Siren,
   History,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -105,6 +106,7 @@ const DEV_TABS = [
 export function ProjectHub({ project, insights, activeTab, members, allUsers, isManager, userRole = "manager", currentUserId = "" }: ProjectHubProps) {
   const router = useRouter();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const TABS = isManager ? MANAGER_TABS : DEV_TABS;
   const visibleTabIds = new Set(TABS.map((t) => t.id));
@@ -126,6 +128,26 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
     if (!res.ok) throw new Error("Failed to update project");
     toast.success("Project updated");
     router.refresh();
+  };
+
+  const handleSaveAsTemplate = async () => {
+    setSavingTemplate(true);
+    try {
+      const res = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${project.name} Template`,
+          fromProjectId: project.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save template");
+      toast.success(`Saved "${project.name}" as a template`);
+    } catch {
+      toast.error("Failed to save template");
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   const urgentInsights = insights.suggestions.filter(
@@ -183,6 +205,19 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
               </span>
               <span className="text-[10px] text-slate-400 uppercase tracking-wide">Health</span>
             </div>
+            {isManager && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveAsTemplate}
+                loading={savingTemplate}
+                title="Save this project's task structure and risks as a reusable template"
+              >
+                <Layers className="w-3 h-3" />
+                <span className="hidden sm:inline">Save as Template</span>
+                <span className="sm:hidden">Template</span>
+              </Button>
+            )}
             {isManager && (
               <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
                 <Pencil className="w-3 h-3" />
