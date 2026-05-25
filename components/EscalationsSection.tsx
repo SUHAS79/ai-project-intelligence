@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { RespondEscalationModal } from "./RespondEscalationModal";
 import { TaskCommentThread } from "./TaskCommentThread";
+import { SLABadge } from "./SLABadge";
 import { useRouter } from "next/navigation";
 
 interface EscalationFull {
@@ -118,6 +119,13 @@ export function EscalationsSection({
                     >
                       {STATUS_LABELS[esc.status] ?? esc.status}
                     </span>
+                    {(esc.status === "OPEN" || esc.status === "RESPONDED") && (
+                      <SLABadge
+                        since={esc.createdAt}
+                        type="escalation"
+                        label={esc.status === "OPEN" ? "Open" : "Open"}
+                      />
+                    )}
                     {esc.task && (
                       <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                         {esc.task.title}

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { RejectTaskModal } from "./RejectTaskModal";
+import { SLABadge } from "./SLABadge";
 import { toast } from "sonner";
 
 type ReviewTask = {
@@ -140,11 +141,20 @@ export function ReviewQueueSection({ initialTasks }: ReviewQueueSectionProps) {
                 </div>
               </div>
 
-              {/* In Review badge */}
-              <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-100 text-purple-700 border border-purple-200">
-                <Clock className="w-3 h-3" />
-                In Review
-              </span>
+              {/* In Review badge + SLA timer */}
+              <div className="shrink-0 flex flex-col items-end gap-1.5">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                  <Clock className="w-3 h-3" />
+                  In Review
+                </span>
+                {task.submittedForReviewAt && (
+                  <SLABadge
+                    since={task.submittedForReviewAt}
+                    type="review"
+                    label="Waiting"
+                  />
+                )}
+              </div>
             </div>
           </div>
         ))}

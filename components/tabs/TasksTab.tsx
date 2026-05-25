@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { TaskModal } from "../TaskModal";
 import { RejectTaskModal } from "../RejectTaskModal";
 import { TaskCommentThread } from "../TaskCommentThread";
+import { SLABadge } from "../SLABadge";
 import {
   STATUS_CONFIG,
   PRIORITY_CONFIG,
@@ -323,6 +324,13 @@ export function TasksTab({
                               <ClipboardCheck className="w-3 h-3" />
                               In Review
                             </span>
+                          )}
+                          {isInReview && task.submittedForReviewAt && (
+                            <SLABadge
+                              since={task.submittedForReviewAt}
+                              type="review"
+                              label="Waiting"
+                            />
                           )}
                           {task.reviewStatus === "REJECTED" && !isInReview && (
                             <span className="inline-flex items-center gap-1 text-[11px] text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">

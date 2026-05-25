@@ -34,6 +34,7 @@ import { SetEstimateModal } from "./SetEstimateModal";
 import { ReviewQueueSection } from "./ReviewQueueSection";
 import { EscalateModal } from "./EscalateModal";
 import { EscalationsSection } from "./EscalationsSection";
+import { SLABadge } from "./SLABadge";
 import { toast } from "sonner";
 
 type EscalationFull = {
@@ -71,6 +72,7 @@ type AssignedTask = {
   reviewStatus: string | null;
   workSummary: string | null;
   rejectionReason: string | null;
+  submittedForReviewAt: string | Date | null;
   assignedToId: string | null;
   estimatedHours: number | null;
   actualHours: number | null;
@@ -308,6 +310,13 @@ export function DevDashboardClient({
                             <ClipboardCheck className="w-3 h-3" />
                             Awaiting Review
                           </span>
+                        )}
+                        {isInReview && task.submittedForReviewAt && (
+                          <SLABadge
+                            since={task.submittedForReviewAt}
+                            type="review"
+                            label="Waiting"
+                          />
                         )}
                         {isRejected && !isInReview && (
                           <span className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
