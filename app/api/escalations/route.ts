@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
 import { logActivity } from "@/lib/logActivity";
+import { sendEmailToUsers } from "@/lib/email";
 
 const CreateEscalationSchema = z.object({
   projectId: z.string().min(1),
@@ -113,19 +114,29 @@ export async function POST(req: NextRequest) {
     `Raised an escalation${escalation.task ? ` on "${escalation.task.title}"` : ""}: ${message.slice(0, 100)}${message.length > 100 ? "…" : ""}`
   );
 
-  // Notify users whose role matches targetRole within this project
+  // Notify + email users whose role matches targetRole within this project
   const rolesToNotify =
     targetRole === "both"
       ? ["manager", "senior_developer"]
       : [targetRole];
   const recipientIds = await getProjectMemberIdsByRole(projectId, rolesToNotify, user.userId);
+  const escLink = `/projects/${projectId}?tab=escalations`;
+  const escPreview = `${message.slice(0, 80)}${message.length > 80 ? "…" : ""}`;
   await notifyMany(
     recipientIds,
     "escalation_received",
     "New escalation",
-    `${user.fullName} raised an escalation${escalation.task ? ` on "${escalation.task.title}"` : ""}: ${message.slice(0, 80)}${message.length > 80 ? "…" : ""}`,
-    `/projects/${projectId}?tab=escalations`
+    `${user.fullName} raised an escalation${escalation.task ? ` on "${escalation.task.title}"` : ""}: ${escPreview}`,
+    escLink
   );
+  sendEmailToUsers(
+    recipientIds,
+    `New escalation from ${user.fullName}`,
+    "New escalation raised",
+    `${user.fullName} raised an escalation${escalation.task ? ` on "${escalation.task.title}"` : ""} in ${escalation.project.name}:\n\n"${message}"`,
+    escLink,
+    "View escalation →"
+  ).catch(console.error);
 
   return NextResponse.json(escalation, { status: 201 });
 }

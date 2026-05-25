@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notify } from "@/lib/notify";
 import { logActivity } from "@/lib/logActivity";
+import { sendEmailToUser } from "@/lib/email";
 
 const RespondSchema = z.object({
   action: z.enum(["respond", "resolve"]),
@@ -71,16 +72,26 @@ export async function PATCH(
       : `Responded to escalation${updated.task ? ` on "${updated.task.title}"` : ""}${response ? `: ${response.slice(0, 80)}${response.length > 80 ? "…" : ""}` : ""}`
   );
 
-  // Notify the escalation creator about the response/resolution
+  // Notify + email the escalation creator about the response/resolution
   if (escalation.createdById !== user.userId) {
     const isResolved = action === "resolve";
+    const escLink = `/projects/${escalation.projectId}?tab=escalations`;
+    const taskContext = updated.task ? ` on "${updated.task.title}"` : "";
     await notify(
       escalation.createdById,
       isResolved ? "escalation_resolved" : "escalation_responded",
       isResolved ? "Escalation resolved" : "Escalation response received",
-      `${user.fullName} ${isResolved ? "resolved" : "responded to"} your escalation${updated.task ? ` on "${updated.task.title}"` : ""}.`,
-      `/projects/${escalation.projectId}?tab=escalations`
+      `${user.fullName} ${isResolved ? "resolved" : "responded to"} your escalation${taskContext}.`,
+      escLink
     );
+    sendEmailToUser(
+      escalation.createdById,
+      isResolved ? "Your escalation has been resolved" : "Response to your escalation",
+      isResolved ? "Escalation resolved ✅" : "Response received",
+      `${user.fullName} ${isResolved ? "resolved" : "responded to"} your escalation${taskContext}${response ? `:\n\n"${response}"` : "."}`,
+      escLink,
+      "View escalation →"
+    ).catch(console.error);
   }
 
   return NextResponse.json(updated);

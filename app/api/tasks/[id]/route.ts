@@ -4,6 +4,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { notify, notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
 import { logActivity } from "@/lib/logActivity";
+import { sendEmailToUser, sendEmailToUsers } from "@/lib/email";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
 
@@ -150,6 +151,13 @@ export async function PUT(
             `"${oldTask.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
             taskLink
           );
+          sendEmailToUser(
+            newAssigneeId,
+            `Task assigned to you: ${oldTask.title}`,
+            "Task assigned to you",
+            `"${oldTask.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
+            taskLink
+          ).catch(console.error);
         }
       }
 

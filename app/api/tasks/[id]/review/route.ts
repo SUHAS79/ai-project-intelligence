@@ -5,6 +5,7 @@ import { z } from "zod";
 import { TASK_INCLUDE } from "../route";
 import { notify, notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
 import { logActivity } from "@/lib/logActivity";
+import { sendEmailToUser, sendEmailToUsers } from "@/lib/email";
 
 // POST /api/tasks/[id]/review — developer submits task for review
 const SubmitSchema = z.object({
@@ -73,15 +74,24 @@ export async function POST(
       `Submitted "${task.title}" for review`
     );
 
-    // Notify senior devs + managers on this project
+    // Notify + email senior devs + managers on this project
     const reviewerIds = await getProjectMemberIdsByRole(
       task.projectId, ["senior_developer", "manager"], user.userId
     );
+    const reviewLink = `/projects/${task.projectId}?tab=tasks`;
     await notifyMany(
       reviewerIds, "task_submitted_for_review", "Task submitted for review",
       `${user.fullName} submitted "${task.title}" for review.`,
-      `/projects/${task.projectId}?tab=tasks`
+      reviewLink
     );
+    sendEmailToUsers(
+      reviewerIds,
+      `Task ready for review: ${task.title}`,
+      "Task submitted for review",
+      `${user.fullName} has submitted "${task.title}" for review and it's waiting for your approval.`,
+      reviewLink,
+      "Review task →"
+    ).catch(console.error);
 
     return Response.json(updated);
   } catch (error) {
@@ -144,13 +154,21 @@ export async function PATCH(
         { id: user.userId, name: user.fullName, role: user.role },
         `Approved "${task.title}"`
       );
-      // Notify the assignee
+      // Notify + email the assignee
       if (task.assignedToId && task.assignedToId !== user.userId) {
+        const approveLink = `/projects/${task.projectId}?tab=tasks`;
         await notify(
           task.assignedToId, "task_approved", "Task approved ✅",
           `${user.fullName} approved "${task.title}". Great work!`,
-          `/projects/${task.projectId}?tab=tasks`
+          approveLink
         );
+        sendEmailToUser(
+          task.assignedToId,
+          `Task approved: ${task.title}`,
+          "Task approved ✅",
+          `Great news! ${user.fullName} approved "${task.title}". The task has been marked as Done.`,
+          approveLink
+        ).catch(console.error);
       }
       return Response.json(updated);
     }
@@ -190,13 +208,22 @@ export async function PATCH(
         { id: user.userId, name: user.fullName, role: user.role },
         `Rejected "${task.title}": ${rejectionReason.trim().slice(0, 120)}${rejectionReason.trim().length > 120 ? "…" : ""}`
       );
-      // Notify the assignee
+      // Notify + email the assignee
       if (task.assignedToId && task.assignedToId !== user.userId) {
+        const rejectLink = `/projects/${task.projectId}?tab=tasks`;
         await notify(
           task.assignedToId, "task_rejected", "Task needs revision",
           `${user.fullName} rejected "${task.title}". Please review the feedback.`,
-          `/projects/${task.projectId}?tab=tasks`
+          rejectLink
         );
+        sendEmailToUser(
+          task.assignedToId,
+          `Task needs revision: ${task.title}`,
+          "Task needs revision",
+          `${user.fullName} has reviewed "${task.title}" and sent it back for changes.\n\nFeedback: ${rejectionReason.trim().slice(0, 300)}`,
+          rejectLink,
+          "View feedback →"
+        ).catch(console.error);
       }
       return Response.json(updated);
     }

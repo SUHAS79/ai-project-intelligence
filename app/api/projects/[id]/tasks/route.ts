@@ -4,6 +4,7 @@ import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { notify } from "@/lib/notify";
 import { logActivity } from "@/lib/logActivity";
+import { sendEmailToUser } from "@/lib/email";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
 
@@ -128,15 +129,23 @@ export async function POST(
       }
     }
 
-    // Notify assignee (if assigned and not the creator)
+    // Notify + email assignee (if assigned and not the creator)
     if (assignedToId && (!actor || actor.userId !== assignedToId)) {
+      const taskLink = `/projects/${projectId}?tab=tasks`;
       await notify(
         assignedToId,
         "task_assigned",
         "New task assigned to you",
         `"${task.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
-        `/projects/${projectId}?tab=tasks`
+        taskLink
       );
+      sendEmailToUser(
+        assignedToId,
+        `New task assigned: ${task.title}`,
+        "New task assigned to you",
+        `You've been assigned a new task in ${project?.name ?? "a project"}:\n\n"${task.title}"`,
+        taskLink
+      ).catch(console.error);
     }
 
     return Response.json(task, { status: 201 });
