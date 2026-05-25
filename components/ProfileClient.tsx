@@ -67,7 +67,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-2.5 mb-8">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">

@@ -144,6 +144,20 @@
 - [x] Modal.tsx mx-4 for mobile overflow safety
 - [x] All modal submitting states verified (TaskModal, RiskModal, ProjectModal, EscalateModal, RespondEscalationModal, CreateMeetingModal)
 
+### Polish Pass v2 ✅ (2026-05-25)
+- [x] EscalationsSection: proper status labels ("Open" / "Responded" / "Resolved"), delete toast feedback
+- [x] MeetingsClient: instant meeting loading state (spinner, disabled, error toast)
+- [x] PeopleManagement: fixed encoding bug in search placeholder; mobile table scroll
+- [x] ProjectHub: role-aware back link (/dev for non-managers); Edit button manager-only
+- [x] ProjectHub: tab bar scrolls on mobile (overflow-x-auto, 7 tabs fit); responsive header
+- [x] Dashboard MetricCard grid: 2 → 3 → 5 columns across breakpoints (sm/md/lg)
+- [x] InsightsTab stats row: 2 → 3 → 5 columns across breakpoints
+- [x] All major pages: p-4 sm:p-8 responsive padding (Dashboard, Dev, Profile, Workload, Meetings, Availability, ProjectHub)
+- [x] AvailabilityCalendar: calendar + side panel stack on mobile (flex-col on < lg); approve/reject/delete toast feedback
+- [x] Sidebar: section label "Menu" → "Navigation" for developer roles
+- [x] TeamTab: cleaner "no tasks" message
+- [x] ProjectCard footer: aligned "Needs attention" + "Open →" on the right
+
 ---
 
 ## Next Priorities (Phase 3)

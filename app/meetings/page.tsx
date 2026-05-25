@@ -27,7 +27,7 @@ export default async function MeetingsPage() {
 
   return (
     <AppShell>
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="p-4 sm:p-8 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">

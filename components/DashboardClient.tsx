@@ -73,9 +73,9 @@ export function DashboardClient({
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow shadow-violet-200">
@@ -87,23 +87,25 @@ export function DashboardClient({
             Neural Analytics for Management Optimization
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setShowPortfolioReport(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <FileText className="w-3.5 h-3.5" />
-            Portfolio Report
+            <span className="hidden sm:inline">Portfolio Report</span>
+            <span className="sm:hidden">Report</span>
           </button>
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="w-3.5 h-3.5" />
-            New Project
+            <span className="hidden sm:inline">New Project</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
       </div>
 
       {/* Summary band */}
-      <div className="grid grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         <MetricCard
           label="Portfolio Health"
           value={`${avgHealth}`}

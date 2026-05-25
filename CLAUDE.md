@@ -193,7 +193,7 @@ return new PrismaClient({ adapter } as any);
 - AI insights are rule-based heuristics, not LLM (upgrade path: replace `lib/insights.ts` functions)
 - No real-time updates (refresh after mutations via `router.refresh()`)
 
-## Polish Pass (completed 2026-05-25)
+## Polish Pass v1 (completed 2026-05-25)
 - Mobile sidebar: hamburger toggle on < lg screens (AppShellClient.tsx + Sidebar.tsx updated)
 - All modals have submitting state + disabled buttons (TaskModal, RiskModal, ProjectModal, EscalateModal, RespondEscalationModal, CreateMeetingModal all use isSubmitting/saving)
 - Date validation in TaskModal and ProjectModal (endDate >= startDate via Zod refine)
@@ -206,3 +206,16 @@ return new PrismaClient({ adapter } as any);
 - ReportTab Copy button shows "Copied!" for 2 seconds after click
 - TeamTab remove member now has confirm() dialog
 - DevDashboardClient review queue shows empty state message when no items
+
+## Polish Pass v2 (completed 2026-05-25)
+- EscalationsSection: status labels use proper case ("Open"/"Responded"/"Resolved"); delete has success toast
+- MeetingsClient: instant meeting button has loading state (spinner + "Starting…" text + error toast); single-click guard
+- PeopleManagement: search placeholder encoding fixed; table gets overflow-x-auto on mobile
+- ProjectHub: back link is role-aware (`/dev` for non-managers, `/` for manager); Edit button only visible to manager; tab bar scrolls on mobile (overflow-x-auto + min-w-max); header stacks on mobile (flex-col → sm:flex-row); all padding responsive (p-4 sm:p-8, px-4 sm:px-8)
+- DashboardClient: MetricCard grid is responsive (`grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`); padding is `p-4 sm:p-8`; header buttons shorten on mobile
+- InsightsTab: stats row is responsive (`grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`)
+- All major pages (Dev dashboard, Profile, Workload, Meetings, Availability): padding is `p-4 sm:p-8`
+- AvailabilityCalendar: calendar + side panel stack on mobile (`flex-col lg:flex-row`); side panel is `w-full lg:w-72`; header wraps on mobile; approve/reject/delete all have toast feedback
+- Sidebar: section label "Menu" → "Navigation" for non-manager roles
+- TeamTab: "No tasks assigned by name in this project." → "No tasks assigned in this project."
+- ProjectCard footer: "Needs attention" and "Open →" grouped right-aligned

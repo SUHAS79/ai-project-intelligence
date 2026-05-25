@@ -110,18 +110,18 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200/80 px-8 py-4">
+      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-8 py-4">
         <Link
-          href="/"
+          href={userRole === "manager" ? "/" : "/dev"}
           className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 mb-3 transition-colors"
         >
           <ArrowLeft className="w-3 h-3" />
           Dashboard
         </Link>
 
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-2.5 mb-1 flex-wrap">
               <h1 className="text-lg font-bold text-slate-900 truncate">{project.name}</h1>
               <span className={`text-xs px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
                 {statusCfg.label}
@@ -130,7 +130,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
             {project.description && (
               <p className="text-xs text-slate-500 mb-1.5 max-w-xl line-clamp-1">{project.description}</p>
             )}
-            <div className="flex items-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 {formatDate(project.startDate)} → {formatDate(project.endDate)}
@@ -153,17 +153,19 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
               </span>
               <span className="text-[10px] text-slate-400 uppercase tracking-wide">Health</span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
-              <Pencil className="w-3 h-3" />
-              Edit
-            </Button>
+            {isManager && (
+              <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
+                <Pencil className="w-3 h-3" />
+                Edit
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="bg-white border-b border-slate-200/80 px-8">
-        <div className="flex gap-0.5 -mb-px">
+      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-8 overflow-x-auto">
+        <div className="flex gap-0.5 -mb-px min-w-max">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentTab === tab.id;
@@ -172,7 +174,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
                 key={tab.id}
                 onClick={() => setCurrentTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-3 text-xs font-medium border-b-2 transition-all",
+                  "flex items-center gap-1.5 px-3.5 py-3 text-xs font-medium border-b-2 transition-all whitespace-nowrap",
                   isActive
                     ? "border-violet-500 text-violet-700"
                     : "border-transparent text-slate-500 hover:text-slate-700"
@@ -192,7 +194,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-8 bg-slate-100">
+      <div className="flex-1 p-4 sm:p-8 bg-slate-100">
         {currentTab === "tasks"    && <TasksTab    project={project} tasks={project.tasks} insights={insights} allUsers={allUsers} userRole={userRole} isManager={isManager} />}
         {currentTab === "forecast" && <ForecastTab project={project} tasks={project.tasks} />}
         {currentTab === "gantt"    && <GanttTab    tasks={project.tasks} />}

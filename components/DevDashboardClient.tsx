@@ -155,7 +155,7 @@ export function DevDashboardClient({
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2.5 mb-1">

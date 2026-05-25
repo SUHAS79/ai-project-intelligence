@@ -107,7 +107,7 @@ export function InsightsTab({ insights, tasks }: InsightsTabProps) {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           { label: "Done",       val: stats.done,       color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "In Progress", val: stats.inProgress, color: "text-blue-600",    bg: "bg-blue-50" },

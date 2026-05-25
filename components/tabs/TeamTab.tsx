@@ -184,7 +184,7 @@ export function TeamTab({
                     {/* Task stats */}
                     {memberTasks.length === 0 ? (
                       <p className="text-xs text-slate-400 italic">
-                        No tasks assigned by name in this project.
+                        No tasks assigned in this project.
                       </p>
                     ) : (
                       <div className="flex flex-wrap gap-2">

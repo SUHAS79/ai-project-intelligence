@@ -205,6 +205,35 @@
 - [x] Modal.tsx: mx-4 for mobile overflow safety
 - [x] All modals verified: submitting state + disabled buttons correct
 
+## ✅ Polish Pass v2 (Completed 2026-05-25)
+- [x] EscalationsSection status labels: "OPEN" → "Open", "RESPONDED" → "Responded", "RESOLVED" → "Resolved"
+- [x] EscalationsSection delete: added success/error toast feedback
+- [x] MeetingsClient instant meeting button: loading state (spinner, disabled, "Starting…" text, error toast)
+- [x] PeopleManagement search placeholder: fixed encoding (â€¦ → …)
+- [x] PeopleManagement table: overflow-x-auto wrapper + min-w-[640px] for mobile
+- [x] ProjectHub back link: role-aware ("/dev" for non-manager, "/" for manager)
+- [x] ProjectHub Edit button: only shown to manager (was visible to all roles)
+- [x] ProjectHub tab bar: overflow-x-auto + whitespace-nowrap for 7 tabs on mobile
+- [x] ProjectHub header: flex-col on mobile, flex-row on sm+; px-4 sm:px-8 padding
+- [x] ProjectHub content: p-4 sm:p-8 responsive padding
+- [x] DashboardClient: p-4 sm:p-8 responsive padding
+- [x] DashboardClient MetricCard grid: grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
+- [x] DashboardClient header: flex-wrap + shortened button labels on mobile
+- [x] DevDashboardClient: p-4 sm:p-8 responsive padding
+- [x] ProfileClient: p-4 sm:p-8 responsive padding
+- [x] Workload page: p-4 sm:p-8 responsive padding
+- [x] Meetings page: p-4 sm:p-8 responsive padding
+- [x] Availability page: p-4 sm:p-8 responsive padding
+- [x] InsightsTab stats row: grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
+- [x] AvailabilityCalendar calendar+panel: flex-col on mobile, flex-row on lg+
+- [x] AvailabilityCalendar side panel: w-full on mobile, w-72 on lg+
+- [x] AvailabilityCalendar header: flex-wrap for mobile
+- [x] AvailabilityCalendar approve/reject: added success/error toast feedback
+- [x] AvailabilityCalendar delete: added success/error toast feedback
+- [x] Sidebar section label: "Menu" → "Navigation" for non-manager roles
+- [x] TeamTab no-tasks message: "No tasks assigned by name" → "No tasks assigned in this project."
+- [x] ProjectCard footer: "Needs attention" + "Open →" grouped in right flex container
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

@@ -47,6 +47,7 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
   const [activeRoom, setActiveRoom] = useState<Meeting | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [startingInstant, setStartingInstant] = useState(false);
 
   const upcomingMeetings = meetings.filter(
     (m) => m.status === "scheduled"
@@ -133,26 +134,45 @@ export function MeetingsClient({ user, initialMeetings, projects }: MeetingsClie
 
         {/* Instant meeting CTA */}
         <button
+          disabled={startingInstant}
           onClick={async () => {
-            // Create an instant meeting with a default title
-            const res = await fetch("/api/meetings", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ title: "Instant Meeting", projectId: null, scheduledAt: null }),
-            });
-            if (res.ok) {
-              const m = await res.json();
-              setMeetings((prev) => [m, ...prev]);
-              handleJoin(m);
+            if (startingInstant) return;
+            setStartingInstant(true);
+            try {
+              const res = await fetch("/api/meetings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: "Instant Meeting", projectId: null, scheduledAt: null }),
+              });
+              if (res.ok) {
+                const m = await res.json();
+                setMeetings((prev) => [m, ...prev]);
+                handleJoin(m);
+              } else {
+                toast.error("Failed to create meeting. Please try again.");
+              }
+            } catch {
+              toast.error("Something went wrong.");
+            } finally {
+              setStartingInstant(false);
             }
           }}
-          className="w-full flex items-center gap-4 px-5 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl text-white hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-200 group"
+          className="w-full flex items-center gap-4 px-5 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl text-white hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-200 group disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
+            {startingInstant ? (
+              <svg className="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
+            )}
           </div>
           <div className="text-left">
-            <p className="font-semibold text-base">Start Instant Meeting</p>
+            <p className="font-semibold text-base">
+              {startingInstant ? "Starting…" : "Start Instant Meeting"}
+            </p>
             <p className="text-violet-200 text-sm">Jump in immediately — no scheduling needed</p>
           </div>
           <Video className="w-5 h-5 ml-auto opacity-70 group-hover:opacity-100 transition-opacity" />

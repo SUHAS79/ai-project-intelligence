@@ -8,6 +8,7 @@ import {
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, parseISO, isToday, isBefore } from "date-fns";
 import { AddAvailabilityModal } from "./AddAvailabilityModal";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AvailabilityEntry {
   id: string;
@@ -124,6 +125,9 @@ export function AvailabilityCalendar({
       if (res.ok) {
         const updated = await res.json();
         setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+        toast.success(approved ? "Vacation request approved." : "Vacation request rejected.");
+      } else {
+        toast.error("Failed to update request.");
       }
     } finally {
       setApprovingId(null);
@@ -137,11 +141,14 @@ export function AvailabilityCalendar({
       const res = await fetch(`/api/availability/${id}`, { method: "DELETE" });
       if (res.ok) {
         setEntries((prev) => prev.filter((e) => e.id !== id));
+        toast.success("Entry deleted.");
         if (selectedDay) {
           // re-check if day still has entries
           const remaining = entries.filter((e) => e.id !== id && dateInRange(selectedDay, e.startDate, e.endDate));
           if (remaining.length === 0) setSelectedDay(null);
         }
+      } else {
+        toast.error("Failed to delete entry.");
       }
     } finally {
       setDeletingId(null);
@@ -151,7 +158,7 @@ export function AvailabilityCalendar({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <button
@@ -206,9 +213,9 @@ export function AvailabilityCalendar({
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Calendar grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
             {/* Day headers */}
             <div className="grid grid-cols-7 border-b border-slate-100">
@@ -287,7 +294,7 @@ export function AvailabilityCalendar({
         </div>
 
         {/* Side panel — selected day or list */}
-        <div className="w-72 shrink-0">
+        <div className="w-full lg:w-72 shrink-0">
           {selectedDay ? (
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">

@@ -155,7 +155,7 @@ export function PeopleManagement({ initialEmployees }: TeamManagementProps) {
   const inactive = employees.filter((e) => e.status === "inactive").length;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -194,7 +194,7 @@ export function PeopleManagement({ initialEmployees }: TeamManagementProps) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email, or roleâ€¦"
+            placeholder="Search by name, email, or role…"
             className="flex-1 text-sm text-slate-700 placeholder:text-slate-400 bg-transparent focus:outline-none"
           />
           {search && (
@@ -220,7 +220,8 @@ export function PeopleManagement({ initialEmployees }: TeamManagementProps) {
             )}
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-slate-100">
                 <SortTh
@@ -354,6 +355,7 @@ export function PeopleManagement({ initialEmployees }: TeamManagementProps) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

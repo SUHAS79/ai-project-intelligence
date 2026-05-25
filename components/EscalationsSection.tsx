@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, MessageSquare, CheckCircle2, Clock, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { RespondEscalationModal } from "./RespondEscalationModal";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,12 @@ const STATUS_STYLES: Record<string, string> = {
   RESOLVED: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  RESPONDED: "Responded",
+  RESOLVED: "Resolved",
+};
+
 const TARGET_LABEL: Record<string, string> = {
   manager: "Manager",
   senior_developer: "Senior Dev",
@@ -58,7 +65,12 @@ export function EscalationsSection({
     if (!confirm("Delete this escalation?")) return;
     setDeleting(id);
     try {
-      await fetch(`/api/escalations/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/escalations/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Escalation deleted.");
+      } else {
+        toast.error("Failed to delete escalation.");
+      }
       router.refresh();
     } finally {
       setDeleting(null);
@@ -102,7 +114,7 @@ export function EscalationsSection({
                     <span
                       className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[esc.status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
                     >
-                      {esc.status}
+                      {STATUS_LABELS[esc.status] ?? esc.status}
                     </span>
                     {esc.task && (
                       <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">

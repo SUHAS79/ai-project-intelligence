@@ -106,7 +106,7 @@ export default function Sidebar({ user, isOpen = false, onClose }: SidebarProps)
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         <p className="text-[10px] uppercase tracking-widest text-slate-600 font-semibold px-2 mb-2">
-          {user?.role === "manager" ? "Workspace" : "Menu"}
+          {user?.role === "manager" ? "Workspace" : "Navigation"}
         </p>
         {navItems.map((item) => {
           const Icon = item.icon;

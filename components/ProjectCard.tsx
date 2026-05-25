@@ -110,15 +110,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 ? <span className="text-amber-500">Due today</span>
                 : <span className="text-red-500">{Math.abs(daysLeft)}d overdue</span>}
             </div>
-            {(stats.blocked > 0 || stats.overdue > 0) && (
-              <div className="flex items-center gap-1 text-xs text-amber-500">
-                <AlertTriangle className="w-3 h-3" />
-                Needs attention
+            <div className="flex items-center gap-3">
+              {(stats.blocked > 0 || stats.overdue > 0) && (
+                <div className="flex items-center gap-1 text-xs text-amber-500">
+                  <AlertTriangle className="w-3 h-3" />
+                  Needs attention
+                </div>
+              )}
+              <div className="flex items-center gap-1 text-xs text-slate-400 group-hover:text-violet-600 transition-colors">
+                Open
+                <ArrowRight className="w-3 h-3" />
               </div>
-            )}
-            <div className="flex items-center gap-1 text-xs text-slate-400 group-hover:text-violet-600 transition-colors">
-              Open
-              <ArrowRight className="w-3 h-3" />
             </div>
           </div>
         </div>
