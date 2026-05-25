@@ -75,6 +75,9 @@ app/
     availability/[id]/    PATCH (approve/reject, manager) | DELETE (creator or manager)
     meetings/             GET (all, team-wide) | POST (create, auto-generates roomName)
     meetings/[id]/        PATCH (update status) | DELETE (creator or manager)
+    templates/            GET → list all templates | POST → save project as template (fromProjectId)
+    templates/[id]/       GET → template detail | DELETE
+    templates/[id]/apply/ POST → create project from template (body: name, startDate, optional endDate)
     search/               GET ?q= → role-scoped search across projects, tasks, people (min 2 chars, max 6 results/category)
     seed/                 POST → re-seeds demo data
 
@@ -92,6 +95,8 @@ components/
   EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards); has "Thread" button per escalation if task attached
   SLABadge.tsx            Reusable elapsed-time urgency badge — type "review" (OK<24h, Warn 24-72h, Overdue>72h) or "escalation" (OK<4h, Warn 4-24h, Overdue>24h)
   GlobalSearch.tsx        Command-palette modal — Cmd/Ctrl+K shortcut; responds to CustomEvent("namo:search:open"); fetches /api/search?q=
+  TemplatesModal.tsx      Manager-only modal listing project templates; triggers UseTemplateModal on "Use"
+  UseTemplateModal.tsx    Form to create a new project from a template (name, dates; end auto-computed from durationDays)
   TaskCommentThread.tsx   Modal dialog for per-task comment thread (Feature C)
   PortfolioReportModal.tsx  Manager-only cross-project report modal (period toggle, health table, copy)
   MeetingsClient.tsx      Meeting list with Live Now/Scheduled/Past sections + Instant Meeting CTA
@@ -120,7 +125,7 @@ lib/
   utils.ts                cn(), formatDate(), daysFromNow(), STATUS_CONFIG, etc.
 
 prisma/
-  schema.prisma           DB schema (Prisma v7 syntax — 21 models including TaskComment + ProjectMessage)
+  schema.prisma           DB schema (Prisma v7 syntax — 24 models including ProjectTemplate + TemplateTask + TemplateRisk)
   seed.ts                 Demo data seeder (19 users, 3 projects, 30 tasks, 36 deps, 18 activities, 8 risks, 6 escalations, 15 availability, 7 meetings, 14 chat msgs, 9 task comments)
   migrations/             Auto-generated migration files
 ```

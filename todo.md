@@ -429,6 +429,25 @@
 - [x] `GlobalSearch` rendered once at shell level in AppShellClient
 - [x] 0 TypeScript errors; commit: e285d46
 
+## ✅ Feature 18 — Template Projects / Reusable Workflows (Completed 2026-05-25)
+- [x] `ProjectTemplate`, `TemplateTask`, `TemplateRisk` Prisma models
+  - `TemplateTask`: `startDayOffset` (days from project start), `durationDays`, priority, estimatedHours
+  - `User.createdTemplates` relation (`TemplateCreator` named)
+- [x] Prisma migration: `add-project-templates`
+- [x] `GET /api/templates` — list all (manager only), with task+risk counts
+- [x] `POST /api/templates` — create from existing project via `fromProjectId`; computes day offsets from task dates
+- [x] `GET /api/templates/[id]` — fetch with full tasks+risks (manager only)
+- [x] `DELETE /api/templates/[id]` — manager only
+- [x] `POST /api/templates/[id]/apply` — create new project from template; offsets all task dates from provided `startDate`; creates risks; logs activity
+- [x] `TemplatesModal` — lists templates with task/risk/duration chips; "Use" and "Delete" per row
+- [x] `UseTemplateModal` — form: project name, description, start date; end date auto-computed from template `durationDays`
+- [x] `DashboardClient`: "Templates" button in header opens TemplatesModal
+- [x] `ProjectHub`: "Save as Template" button in header (manager only); uses project name + " Template" as default
+- [x] Seed: 2 demo templates (Software Sprint: 14d/7 tasks/2 risks; Product Launch: 45d/10 tasks/4 risks)
+- [x] Seed cleanup updated for new models
+- [x] 0 TypeScript errors; commit: 2f3fdde
+- ⚠️ Server restart required after migration (Prisma singleton cache)
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

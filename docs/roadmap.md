@@ -314,6 +314,19 @@
 - [x] Mobile top bar: search icon dispatches open event
 - [x] `GlobalSearch` rendered once at shell level in `AppShellClient`
 
+### Feature 18 — Template Projects / Reusable Workflows ✅ (2026-05-25)
+- [x] 3 new Prisma models: `ProjectTemplate`, `TemplateTask` (with `startDayOffset` + `durationDays`), `TemplateRisk`
+- [x] Migration `add-project-templates`; `User.createdTemplates` relation
+- [x] `GET /api/templates` — list all with task+risk counts (manager only)
+- [x] `POST /api/templates` — save project as template; automatically computes day offsets from `project.startDate`
+- [x] `DELETE /api/templates/[id]` — manager only
+- [x] `POST /api/templates/[id]/apply` — create project from template; offsets task dates from new start date; copies risks; logs activity
+- [x] `TemplatesModal` — lists templates with task/risk/duration chips; Use + Delete actions per row
+- [x] `UseTemplateModal` — project name, description, start date (end date auto-set from template duration)
+- [x] Dashboard: "Templates" button in header
+- [x] ProjectHub: "Save as Template" button (manager only); saves with template name = `{project.name} Template`
+- [x] Seed: 2 demo templates with realistic task structures and risk registers
+
 ---
 
 ## Next Priorities (Phase 3)
