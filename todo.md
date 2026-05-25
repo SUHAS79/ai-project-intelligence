@@ -448,6 +448,24 @@
 - [x] 0 TypeScript errors; commit: 2f3fdde
 - ⚠️ Server restart required after migration (Prisma singleton cache)
 
+## ✅ Feature 19 — Basic Email Notifications (Completed 2026-05-25)
+- [x] `lib/email.ts` — transactional email module using Resend HTTP API (no npm package needed)
+  - `buildEmailHtml(title, body, ctaUrl?, ctaLabel?)` — table-based branded HTML email template (violet NAMO header, CTA button, footer)
+  - `sendEmail({ to, subject, html })` — sends via Resend; **silently skips** with console.log if `RESEND_API_KEY` is not set
+  - `sendEmailToUser(userId, ...)` — fetches user email from DB, builds HTML, sends (non-throwing)
+  - `sendEmailToUsers(userIds, ...)` — batch; fires all sends concurrently with Promise.all
+- [x] Email triggers wired **fire-and-forget** alongside existing `notify()` calls:
+  - Task assigned → email new assignee
+  - Task reassigned → email new assignee
+  - Review submitted → email all seniors + managers on the project
+  - Review approved → email task assignee
+  - Review rejected → email task assignee with feedback excerpt
+  - Escalation created → email target-role members
+  - Escalation responded/resolved → email escalation creator
+- [x] `.env` updated: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` documented (commented out)
+- [x] Zero breaking changes — app works identically in dev without any env vars configured
+- [x] 0 TypeScript errors; commit: 9d5f8e8
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

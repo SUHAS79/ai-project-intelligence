@@ -95,6 +95,10 @@ components/
   EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards); has "Thread" button per escalation if task attached
   SLABadge.tsx            Reusable elapsed-time urgency badge — type "review" (OK<24h, Warn 24-72h, Overdue>72h) or "escalation" (OK<4h, Warn 4-24h, Overdue>24h)
   GlobalSearch.tsx        Command-palette modal — Cmd/Ctrl+K shortcut; responds to CustomEvent("namo:search:open"); fetches /api/search?q=
+
+lib/
+  email.ts               Resend email module — sendEmail, sendEmailToUser, sendEmailToUsers, buildEmailHtml
+                          Gracefully skips (console.log) when RESEND_API_KEY absent. Non-throwing.
   TemplatesModal.tsx      Manager-only modal listing project templates; triggers UseTemplateModal on "Use"
   UseTemplateModal.tsx    Form to create a new project from a template (name, dates; end auto-computed from durationDays)
   TaskCommentThread.tsx   Modal dialog for per-task comment thread (Feature C)

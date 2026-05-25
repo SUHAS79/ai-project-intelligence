@@ -327,6 +327,24 @@
 - [x] ProjectHub: "Save as Template" button (manager only); saves with template name = `{project.name} Template`
 - [x] Seed: 2 demo templates with realistic task structures and risk registers
 
+### Feature 19 — Basic Email Notifications ✅ (2026-05-25)
+- [x] `lib/email.ts` — Resend HTTP API wrapper (no package install; uses global `fetch`)
+  - `buildEmailHtml` — table-based HTML template with violet NAMO header and CTA button
+  - `sendEmail` — gracefully skips (console.log) when `RESEND_API_KEY` is absent
+  - `sendEmailToUser` / `sendEmailToUsers` — fetch emails from DB + send; non-throwing
+- [x] Email triggers (fire-and-forget alongside in-app `notify()` calls):
+  | Event | Recipients |
+  |---|---|
+  | Task assigned | New assignee |
+  | Task reassigned | New assignee |
+  | Review submitted | All senior devs + managers on project |
+  | Review approved | Task assignee |
+  | Review rejected | Task assignee (with feedback excerpt) |
+  | Escalation created | Target role members |
+  | Escalation responded/resolved | Escalation creator |
+- [x] `.env`: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` (all commented out — opt-in)
+- [x] Zero config needed in dev — emails silently skip without breaking any existing flow
+
 ---
 
 ## Next Priorities (Phase 3)
