@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
@@ -31,9 +32,19 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getUserFromToken();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
     const { id } = await params;
+
+    // Managers see all tasks; dev/senior only see their own assigned tasks
+    const where =
+      user.role === "manager"
+        ? { projectId: id }
+        : { projectId: id, assignedToId: user.userId };
+
     const tasks = await prisma.task.findMany({
-      where: { projectId: id },
+      where,
       include: TASK_INCLUDE,
       orderBy: { startDate: "asc" },
     });

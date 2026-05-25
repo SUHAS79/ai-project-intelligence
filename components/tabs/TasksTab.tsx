@@ -113,6 +113,7 @@ export function TasksTab({
   const commentTask = tasks.find((t) => t.id === commentTaskId) ?? null;
 
   const canReview = isManager || userRole === "senior_developer";
+  const isDevView = !isManager; // dev or senior dev — tasks already pre-filtered to their own
 
   const filteredTasks = filter === "ALL" ? tasks : tasks.filter((t) => t.status === filter);
 
@@ -262,10 +263,14 @@ export function TasksTab({
             <ListTodo className="w-6 h-6 text-slate-400" />
           </div>
           <p className="font-medium text-slate-700 mb-1">
-            {filter === "ALL" ? "No tasks yet" : `No ${STATUS_FILTER_LABELS[filter].toLowerCase()} tasks`}
+            {filter === "ALL"
+              ? (isDevView ? "No tasks assigned to you" : "No tasks yet")
+              : `No ${STATUS_FILTER_LABELS[filter].toLowerCase()} tasks`}
           </p>
           <p className="text-sm text-slate-400">
-            {filter === "ALL" ? "Add your first task to start tracking progress" : "Switch filters to see other tasks"}
+            {filter === "ALL"
+              ? (isDevView ? "Tasks assigned to you in this project will appear here" : "Add your first task to start tracking progress")
+              : "Switch filters to see other tasks"}
           </p>
         </div>
       ) : (

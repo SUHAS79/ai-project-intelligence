@@ -213,6 +213,20 @@
 - [x] Seed: 14 project chat messages + 9 task comments across all 3 projects; cleanup updated for new models
 - [x] CLAUDE.md, docs/roadmap.md, todo.md updated
 
+### Feature 12 — Role-Based Visibility Refactor ✅ (2026-05-25)
+- [x] MANAGER_TABS (9 tabs): Tasks · Forecast · Timeline · Risks · Team · Chat · Escalations · AI Insights · Report
+- [x] DEV_TABS (4 tabs): My Tasks · Team · Chat · Escalations
+- [x] "Tasks" relabeled to "My Tasks" in DEV_TABS — label change applies at definition; manager tab unchanged
+- [x] Forecast, Timeline, Risks, AI Insights, Report hidden from dev/senior at both UI (tab bar) and render level (`{isManager && ...}`)
+- [x] myTasks: managers see all project tasks; dev/senior see only tasks where assignedToId === currentUserId
+- [x] TasksTab receives filtered myTasks; TeamTab still receives full project.tasks for accurate member stats
+- [x] API-level enforcement: GET /api/projects/[id]/tasks filters by assignedToId for non-managers
+- [x] safeActiveTab guards: URL ?tab= clamped to role-visible tabs (no blank content for dev opening manager URL)
+- [x] TasksTab empty states role-aware: "No tasks assigned to you" / "Tasks assigned to you in this project will appear here"
+- [x] Health score in header computed server-side from full task list (accurate for all roles)
+- [x] Back link: "/" for managers; "/dev/projects" for dev/senior
+- [x] 0 TypeScript errors
+
 ---
 
 ## Next Priorities (Phase 3)

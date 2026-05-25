@@ -78,7 +78,8 @@ interface ProjectHubProps {
   currentUserId?: string;
 }
 
-const TABS = [
+// All possible tabs — manager sees all; dev/senior sees a filtered subset
+const MANAGER_TABS = [
   { id: "tasks",       label: "Tasks",       icon: CheckSquare },
   { id: "forecast",    label: "Forecast",    icon: TrendingUp },
   { id: "gantt",       label: "Timeline",    icon: GanttChart },
@@ -90,10 +91,24 @@ const TABS = [
   { id: "report",      label: "Report",      icon: FileText },
 ];
 
+// Dev / Senior Dev only see execution-relevant tabs; "My Tasks" instead of "Tasks"
+const DEV_TABS = [
+  { id: "tasks",       label: "My Tasks",    icon: CheckSquare },
+  { id: "team",        label: "Team",        icon: Users },
+  { id: "chat",        label: "Chat",        icon: MessageSquare },
+  { id: "escalations", label: "Escalations", icon: Siren },
+];
+
 export function ProjectHub({ project, insights, activeTab, members, allUsers, isManager, userRole = "manager", currentUserId = "" }: ProjectHubProps) {
   const router = useRouter();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [currentTab, setCurrentTab] = useState(activeTab);
+
+  const TABS = isManager ? MANAGER_TABS : DEV_TABS;
+  const visibleTabIds = new Set(TABS.map((t) => t.id));
+
+  // Clamp the initial active tab to one that exists for this role
+  const safeActiveTab = visibleTabIds.has(activeTab) ? activeTab : TABS[0].id;
+  const [currentTab, setCurrentTab] = useState(safeActiveTab);
 
   const statusCfg = PROJECT_STATUS_CONFIG[project.status as keyof typeof PROJECT_STATUS_CONFIG];
   const daysLeft = daysFromNow(project.endDate);
@@ -114,16 +129,21 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
     (s) => s.severity === "CRITICAL" || s.severity === "HIGH"
   ).length;
 
+  // For dev/senior: restrict task list to their own assigned tasks only
+  const myTasks = isManager
+    ? project.tasks
+    : project.tasks.filter((t) => (t as any).assignedToId === currentUserId);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <div className="bg-white border-b border-slate-200/80 px-4 sm:px-8 py-4">
         <Link
-          href={userRole === "manager" ? "/" : "/dev"}
+          href={isManager ? "/" : "/dev/projects"}
           className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 mb-3 transition-colors"
         >
           <ArrowLeft className="w-3 h-3" />
-          Dashboard
+          {isManager ? "Dashboard" : "My Projects"}
         </Link>
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -202,11 +222,28 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
 
       {/* Content */}
       <div className="flex-1 p-4 sm:p-8 bg-slate-100">
-        {currentTab === "tasks"    && <TasksTab    project={project} tasks={project.tasks} insights={insights} allUsers={allUsers} userRole={userRole} isManager={isManager} currentUserId={currentUserId} />}
-        {currentTab === "forecast" && <ForecastTab project={project} tasks={project.tasks} />}
-        {currentTab === "gantt"    && <GanttTab    tasks={project.tasks} />}
-        {currentTab === "risks"    && <RisksTab    projectId={project.id} risks={project.risks} insights={insights} />}
-        {currentTab === "team"     && (
+        {/* Tasks — managers see all; dev/senior see only their own (myTasks) */}
+        {currentTab === "tasks" && (
+          <TasksTab
+            project={project}
+            tasks={myTasks}
+            insights={insights}
+            allUsers={allUsers}
+            userRole={userRole}
+            isManager={isManager}
+            currentUserId={currentUserId}
+          />
+        )}
+
+        {/* Manager-only tabs */}
+        {isManager && currentTab === "forecast"  && <ForecastTab project={project} tasks={project.tasks} />}
+        {isManager && currentTab === "gantt"     && <GanttTab    tasks={project.tasks} />}
+        {isManager && currentTab === "risks"     && <RisksTab    projectId={project.id} risks={project.risks} insights={insights} />}
+        {isManager && currentTab === "insights"  && <InsightsTab insights={insights} tasks={project.tasks} />}
+        {isManager && currentTab === "report"    && <ReportTab   projectId={project.id} />}
+
+        {/* Shared tabs (all roles) */}
+        {currentTab === "team" && (
           <TeamTab
             projectId={project.id}
             initialMembers={members}
@@ -221,7 +258,7 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
             isManager={isManager}
           />
         )}
-        {currentTab === "chat"     && (
+        {currentTab === "chat" && (
           <ChatTab
             projectId={project.id}
             currentUserId={currentUserId}
@@ -237,8 +274,6 @@ export function ProjectHub({ project, insights, activeTab, members, allUsers, is
             isManager={isManager}
           />
         )}
-        {currentTab === "insights" && <InsightsTab insights={insights} tasks={project.tasks} />}
-        {currentTab === "report"   && <ReportTab   projectId={project.id} />}
       </div>
 
       <ProjectModal

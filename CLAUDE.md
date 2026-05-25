@@ -382,7 +382,60 @@ Features A–G: transformed the developer and senior developer experience into a
 - "Escalations" tab added to ProjectHub (between Chat and AI Insights)
 - `EscalationsTab` component: fetches `/api/escalations` and filters to current project; shows EscalationsSection + "New Escalation" button for dev/senior
 - Proxy updated: `/projects/[id]` now accessible to all authenticated roles (was manager-only); only `/projects` (the list) remains manager-only
-- Combined result: dev/senior opening a project sees: Tasks (with comments + approve/reject if senior), Forecast, Timeline, Risks, Team, Chat, Escalations, AI Insights, Report
+- Combined result: dev/senior opening a project sees: My Tasks (with comments + approve/reject if senior), Team, Chat, Escalations
+
+## Role-Based Visibility Refactor (completed 2026-05-25)
+
+### Tab visibility by role
+```ts
+// ProjectHub.tsx
+const MANAGER_TABS = [
+  { id: "tasks",       label: "Tasks",       icon: CheckSquare },
+  { id: "forecast",    label: "Forecast",    icon: TrendingUp },
+  { id: "gantt",       label: "Timeline",    icon: GanttChart },
+  { id: "risks",       label: "Risks",       icon: AlertTriangle },
+  { id: "team",        label: "Team",        icon: Users },
+  { id: "chat",        label: "Chat",        icon: MessageSquare },
+  { id: "escalations", label: "Escalations", icon: Siren },
+  { id: "insights",    label: "AI Insights", icon: Brain },
+  { id: "report",      label: "Report",      icon: FileText },
+];
+
+const DEV_TABS = [
+  { id: "tasks",       label: "My Tasks",    icon: CheckSquare },
+  { id: "team",        label: "Team",        icon: Users },
+  { id: "chat",        label: "Chat",        icon: MessageSquare },
+  { id: "escalations", label: "Escalations", icon: Siren },
+];
+```
+
+### Task filtering — three layers
+1. **API layer** (`/api/projects/[id]/tasks` GET): non-managers get `WHERE assignedToId = {userId}` — server rejects blind requests
+2. **Component layer** (ProjectHub): `myTasks = isManager ? project.tasks : project.tasks.filter(t => t.assignedToId === currentUserId)`
+3. **Tab layer** (TasksTab): receives `myTasks` — filtered list already applied
+4. **TeamTab exception**: receives full `project.tasks` so per-member task counts remain accurate for all viewers
+
+### Content render guards
+```tsx
+{currentTab === "tasks" && <TasksTab tasks={myTasks} ... />}
+{isManager && currentTab === "forecast"  && <ForecastTab ... />}
+{isManager && currentTab === "gantt"     && <GanttTab ... />}
+{isManager && currentTab === "risks"     && <RisksTab ... />}
+{isManager && currentTab === "insights"  && <InsightsTab ... />}
+{isManager && currentTab === "report"    && <ReportTab ... />}
+{currentTab === "team"        && <TeamTab tasks={project.tasks} ... />}  // full tasks!
+{currentTab === "chat"        && <ChatTab ... />}
+{currentTab === "escalations" && <EscalationsTab ... />}
+```
+
+### safeActiveTab guard
+```ts
+const safeActiveTab = visibleTabIds.has(activeTab) ? activeTab : TABS[0].id;
+```
+Prevents blank content when a dev opens a URL like `/projects/[id]?tab=forecast` — clamps to first visible tab instead.
+
+### Health score (header)
+Always computed server-side from ALL project tasks (`computeInsights(project.tasks as any, project.risks)`) regardless of role, so the score is accurate even when TasksTab is filtered.
 
 ### New Prisma models
 ```prisma

@@ -296,6 +296,21 @@
 - [x] 0 TypeScript errors; `npm run seed` tested successfully
 - [x] CLAUDE.md + docs/roadmap.md + todo.md updated
 
+## ✅ Feature 12 — Role-Based Visibility Refactor (Completed 2026-05-25)
+- [x] MANAGER_TABS (9): Tasks · Forecast · Timeline · Risks · Team · Chat · Escalations · AI Insights · Report
+- [x] DEV_TABS (4): My Tasks · Team · Chat · Escalations
+- [x] "Tasks" → "My Tasks" label for dev/senior in tab bar (DEV_TABS definition)
+- [x] TasksTab empty-state text: "No tasks assigned to you" / "Tasks assigned to you in this project will appear here" for non-managers
+- [x] myTasks computed in ProjectHub: managers get project.tasks; dev/senior filter by assignedToId === currentUserId
+- [x] TasksTab receives myTasks (filtered list) — manager-only tasks invisible to dev/senior in UI
+- [x] TeamTab still receives full project.tasks so per-member task stats remain accurate
+- [x] API /api/projects/[id]/tasks GET: role-gated — managers see all; dev/senior see only their own assigned tasks
+- [x] safeActiveTab: clamps URL ?tab= to tabs visible for current role (prevents blank screen when dev opens manager-targeted URL)
+- [x] Forecast, Timeline, Risks, AI Insights, Report tabs guarded with {isManager && ...} in content rendering
+- [x] Back link: "/" for managers; "/dev/projects" for dev/senior
+- [x] health score header still computed from ALL project tasks (server-side, for accuracy regardless of role)
+- [x] 0 TypeScript errors confirmed
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

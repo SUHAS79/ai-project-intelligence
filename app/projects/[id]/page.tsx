@@ -66,6 +66,9 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
 
   if (!project) notFound();
 
+  const isManager = tokenUser?.role === "manager";
+
+  // Compute insights using ALL tasks (needed for health score in header for all roles)
   const insights = computeInsights(project.tasks as any, project.risks);
 
   // Serialize dates for client components
@@ -82,7 +85,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
         activeTab={tab}
         members={serializedMembers}
         allUsers={allUsers}
-        isManager={tokenUser?.role === "manager"}
+        isManager={isManager}
         userRole={tokenUser?.role ?? "manager"}
         currentUserId={tokenUser?.userId ?? ""}
       />
