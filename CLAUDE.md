@@ -474,6 +474,67 @@ await prisma.taskActivity.deleteMany();
 // ... rest unchanged
 ```
 
+## In-App Notifications Center (completed 2026-05-25)
+
+### Schema
+```prisma
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // task_assigned | task_reassigned | task_status_changed | task_submitted_for_review | task_approved | task_rejected | escalation_received | escalation_responded | escalation_resolved | meeting_created | project_assigned
+  title     String
+  body      String
+  link      String?  // relative URL, e.g. "/projects/[id]?tab=tasks"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+```
+
+### Utility — `lib/notify.ts`
+Three exports (all non-throwing — wrapped in try/catch):
+- `notify(userId, type, title, body, link?)` — single notification
+- `notifyMany(userIds, type, title, body, link?)` — batch (createMany)
+- `getProjectMemberIdsByRole(projectId, roles, excludeUserId?)` — returns user IDs of project members matching the given role(s)
+
+### API
+- `GET /api/notifications` → `{ notifications: [...], unreadCount: number }` — last 50, current user only
+- `PATCH /api/notifications` → mark ALL unread as read for current user
+- `PATCH /api/notifications/[id]` → mark one as read (verifies ownership)
+
+### UI — `components/NotificationsDropdown.tsx`
+- Props: `placement: "sidebar" | "topbar"`
+  - `"sidebar"` → bell styled as sidebar nav row, dropdown opens to the right (`left-full ml-3`)
+  - `"topbar"` → compact icon button, dropdown opens downward right-aligned (`right-0 top-full`)
+- 30s polling via `setInterval`; refreshes on open
+- Optimistic mark-as-read on click; navigates to `link` if set
+- "Mark all read" button visible when `unreadCount > 0`
+- Emoji icon per notification type (TYPE_ICON map)
+- Close on outside click or Escape
+
+### Placement
+- `Sidebar.tsx` → `<NotificationsDropdown placement="sidebar" />` in the footer (above user card)
+- `AppShellClient.tsx` → `<NotificationsDropdown placement="topbar" />` in mobile top bar (right of NAMO label)
+
+### Notification triggers (where fired)
+| Trigger | Route | Recipients |
+|---|---|---|
+| task assigned | POST /api/projects/[id]/tasks | assignee (if ≠ actor) |
+| task reassigned | PUT /api/tasks/[id] | new assignee (if ≠ actor) |
+| task BLOCKED | PUT /api/tasks/[id] | project managers + senior devs (excl. actor) |
+| submitted for review | POST /api/tasks/[id]/review | project managers + senior devs |
+| task approved | PATCH /api/tasks/[id]/review | assignee |
+| task rejected | PATCH /api/tasks/[id]/review | assignee |
+| task reopened | PATCH /api/tasks/[id]/review | assignee |
+| escalation created | POST /api/escalations | target-role members on project |
+| escalation responded/resolved | PATCH /api/escalations/[id] | escalation creator |
+| meeting created (team) | POST /api/meetings | all project members (excl. creator) |
+| meeting created (1-on-1) | POST /api/meetings | participant only |
+| project assigned | PUT /api/users/[id]/projects | user (for each newly added project) |
+
+### Seed
+21 demo notifications pre-loaded across 7 users (sarah, marcus, rachel, alex, jordan, emma, james, sophie, yuki) with mixed read/unread states.
+
 ## Meeting Queries & Chat Fix (completed 2026-05-25)
 
 ### Root cause — stale Prisma singleton

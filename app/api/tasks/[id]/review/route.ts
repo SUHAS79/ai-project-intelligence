@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
 import { TASK_INCLUDE } from "../route";
+import { notify, notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
 
 // POST /api/tasks/[id]/review — developer submits task for review
 const SubmitSchema = z.object({
@@ -64,6 +65,20 @@ export async function POST(
       include: TASK_INCLUDE,
     });
 
+    // Notify senior devs + managers on this project that a task needs review
+    const reviewerIds = await getProjectMemberIdsByRole(
+      task.projectId,
+      ["senior_developer", "manager"],
+      user.userId
+    );
+    await notifyMany(
+      reviewerIds,
+      "task_submitted_for_review",
+      "Task submitted for review",
+      `${user.fullName} submitted "${task.title}" for review.`,
+      `/projects/${task.projectId}?tab=tasks`
+    );
+
     return Response.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -119,6 +134,16 @@ export async function PATCH(
         },
         include: TASK_INCLUDE,
       });
+      // Notify the assignee their task was approved
+      if (task.assignedToId && task.assignedToId !== user.userId) {
+        await notify(
+          task.assignedToId,
+          "task_approved",
+          "Task approved ✅",
+          `${user.fullName} approved "${task.title}". Great work!`,
+          `/projects/${task.projectId}?tab=tasks`
+        );
+      }
       return Response.json(updated);
     }
 
@@ -151,6 +176,16 @@ export async function PATCH(
         },
         include: TASK_INCLUDE,
       });
+      // Notify the assignee their task was rejected
+      if (task.assignedToId && task.assignedToId !== user.userId) {
+        await notify(
+          task.assignedToId,
+          "task_rejected",
+          "Task needs revision",
+          `${user.fullName} rejected "${task.title}". Please review the feedback.`,
+          `/projects/${task.projectId}?tab=tasks`
+        );
+      }
       return Response.json(updated);
     }
 
@@ -181,6 +216,16 @@ export async function PATCH(
         },
         include: TASK_INCLUDE,
       });
+      // Notify the assignee their task was reopened
+      if (task.assignedToId && task.assignedToId !== user.userId) {
+        await notify(
+          task.assignedToId,
+          "task_status_changed",
+          "Task reopened",
+          `${user.fullName} reopened "${task.title}". Please continue working on it.`,
+          `/projects/${task.projectId}?tab=tasks`
+        );
+      }
       return Response.json(updated);
     }
 

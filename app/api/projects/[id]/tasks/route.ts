@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
+import { notify } from "@/lib/notify";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
 
@@ -86,6 +87,25 @@ export async function POST(
       },
       include: TASK_INCLUDE,
     });
+
+    // Notify assignee (if assigned and not the creator)
+    if (assignedToId) {
+      const actor = await getUserFromToken().catch(() => null);
+      if (!actor || actor.userId !== assignedToId) {
+        const project = await prisma.project.findUnique({
+          where: { id: projectId },
+          select: { name: true },
+        }).catch(() => null);
+        await notify(
+          assignedToId,
+          "task_assigned",
+          "New task assigned to you",
+          `"${task.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
+          `/projects/${projectId}?tab=tasks`
+        );
+      }
+    }
+
     return Response.json(task, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

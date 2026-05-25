@@ -18,6 +18,7 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // ─── Cleanup (safe dependency order) ────────────────────────────────────────
+  await prisma.notification.deleteMany();
   await prisma.taskComment.deleteMany();
   await prisma.projectMessage.deleteMany();
   await prisma.taskActivity.deleteMany();
@@ -1188,6 +1189,214 @@ async function main() {
     ],
   });
 
+  // ─── Notifications ────────────────────────────────────────────────────────
+  // Realistic notifications reflecting events that "would have happened" based on seed data.
+  console.log("  Seeding notifications...");
+  await prisma.notification.createMany({
+    data: [
+      // ── Sarah (manager, p1 lead) ──────────────────────────────────────────
+      // Yuki's wireframes submitted for review on p3 (cross-project visibility since sarah isn't on p3)
+      // Emma escalated a blocker to managers
+      {
+        userId: sarah.id,
+        type: "task_submitted_for_review",
+        title: "Task submitted for review",
+        body: "Alex Rivera submitted \"iOS onboarding screens — permissions flow\" for review.",
+        link: `/projects/${p1.id}?tab=tasks`,
+        read: true,
+        createdAt: dt(-3, 10),
+      },
+      {
+        userId: sarah.id,
+        type: "escalation_received",
+        title: "New escalation",
+        body: "Emma Wilson raised an escalation on \"Android onboarding — welcome screens\": Blocked waiting on design assets...",
+        link: `/projects/${p1.id}?tab=escalations`,
+        read: false,
+        createdAt: dt(-1, 14),
+      },
+      {
+        userId: sarah.id,
+        type: "escalation_received",
+        title: "New escalation",
+        body: "Maria Santos raised an escalation: Missing assets are causing a full stop on Android onboarding screens...",
+        link: `/projects/${p1.id}?tab=escalations`,
+        read: false,
+        createdAt: dt(-1, 15),
+      },
+      {
+        userId: sarah.id,
+        type: "task_submitted_for_review",
+        title: "Task submitted for review",
+        body: "Lisa Tran submitted \"Push notifications integration\" for review.",
+        link: `/projects/${p1.id}?tab=tasks`,
+        read: false,
+        createdAt: dt(0, 9),
+      },
+      // ── Marcus (manager, p2 lead) ─────────────────────────────────────────
+      {
+        userId: marcus.id,
+        type: "task_submitted_for_review",
+        title: "Task submitted for review",
+        body: "Aisha Okafor submitted \"Batch ETL pipeline\" for review.",
+        link: `/projects/${p2.id}?tab=tasks`,
+        read: true,
+        createdAt: dt(-4, 11),
+      },
+      {
+        userId: marcus.id,
+        type: "escalation_received",
+        title: "New escalation",
+        body: "Tyler Wright raised an escalation: Kinesis consumer config is missing IAM role permissions in staging...",
+        link: `/projects/${p2.id}?tab=escalations`,
+        read: false,
+        createdAt: dt(-2, 16),
+      },
+      // ── Rachel (manager, p3 lead) ─────────────────────────────────────────
+      {
+        userId: rachel.id,
+        type: "task_submitted_for_review",
+        title: "Task submitted for review",
+        body: "Yuki Tanaka submitted \"Wireframes and design system setup\" for review.",
+        link: `/projects/${p3.id}?tab=tasks`,
+        read: false,
+        createdAt: dt(-1, 9),
+      },
+      {
+        userId: rachel.id,
+        type: "meeting_created",
+        title: "New team meeting scheduled",
+        body: "Jordan Walsh scheduled \"Dashboard Design Review\" for Internal Dashboard Redesign.",
+        link: "/meetings",
+        read: true,
+        createdAt: dt(-2, 8),
+      },
+      // ── Alex (senior dev, p1) ─────────────────────────────────────────────
+      {
+        userId: alex.id,
+        type: "task_assigned",
+        title: "New task assigned to you",
+        body: "\"App Store submission preparation\" in Mobile App Launch Q3 has been assigned to you.",
+        link: `/projects/${p1.id}?tab=tasks`,
+        read: true,
+        createdAt: dt(-10, 9),
+      },
+      {
+        userId: alex.id,
+        type: "task_approved",
+        title: "Task approved ✅",
+        body: "Sarah Mitchell approved \"iOS core feature implementation\". Great work!",
+        link: `/projects/${p1.id}?tab=tasks`,
+        read: true,
+        createdAt: dt(-8, 14),
+      },
+      {
+        userId: alex.id,
+        type: "meeting_created",
+        title: "1-on-1 meeting scheduled",
+        body: "Sarah Mitchell scheduled a 1-on-1 meeting with you: \"1-on-1 with Alex Rivera\".",
+        link: "/meetings",
+        read: false,
+        createdAt: dt(0, 8),
+      },
+      // ── Jordan (senior dev, p3) ────────────────────────────────────────────
+      {
+        userId: jordan.id,
+        type: "task_submitted_for_review",
+        title: "Task submitted for review",
+        body: "Yuki Tanaka submitted \"Wireframes and design system setup\" for review.",
+        link: `/projects/${p3.id}?tab=tasks`,
+        read: false,
+        createdAt: dt(-1, 9),
+      },
+      {
+        userId: jordan.id,
+        type: "escalation_received",
+        title: "New escalation",
+        body: "Ben Carter raised an escalation on \"Dashboard views implementation\": The spec is ambiguous about real-time update requirements...",
+        link: `/projects/${p3.id}?tab=escalations`,
+        read: true,
+        createdAt: dt(-6, 10),
+      },
+      // ── Emma (developer, p1 + p3) ─────────────────────────────────────────
+      {
+        userId: emma.id,
+        type: "task_rejected",
+        title: "Task needs revision",
+        body: "Alex Rivera rejected \"Push notification deep linking\". Please review the feedback.",
+        link: `/projects/${p1.id}?tab=tasks`,
+        read: true,
+        createdAt: dt(-5, 15),
+      },
+      {
+        userId: emma.id,
+        type: "task_approved",
+        title: "Task approved ✅",
+        body: "Rachel Chen approved \"Analytics event tracking setup\". Great work!",
+        link: `/projects/${p3.id}?tab=tasks`,
+        read: false,
+        createdAt: dt(-1, 11),
+      },
+      {
+        userId: emma.id,
+        type: "project_assigned",
+        title: "Added to a project",
+        body: "Rachel Chen added you to \"Internal Dashboard Redesign\".",
+        link: `/projects/${p3.id}`,
+        read: true,
+        createdAt: dt(-30, 9),
+      },
+      // ── James (developer, p1) ─────────────────────────────────────────────
+      {
+        userId: james.id,
+        type: "task_approved",
+        title: "Task approved ✅",
+        body: "Alex Rivera approved \"iOS onboarding screens — permissions flow\". Great work!",
+        link: `/projects/${p1.id}?tab=tasks`,
+        read: false,
+        createdAt: dt(-3, 16),
+      },
+      {
+        userId: james.id,
+        type: "meeting_created",
+        title: "New team meeting scheduled",
+        body: "Sarah Mitchell scheduled \"Mobile App Sprint Review\" for Mobile App Launch Q3.",
+        link: "/meetings",
+        read: false,
+        createdAt: dt(-1, 8),
+      },
+      // ── Sophie (developer, p2) ────────────────────────────────────────────
+      {
+        userId: sophie.id,
+        type: "meeting_created",
+        title: "1-on-1 meeting scheduled",
+        body: "Marcus Johnson scheduled a 1-on-1 meeting with you: \"1-on-1 with Sophie Brown\".",
+        link: "/meetings",
+        read: false,
+        createdAt: dt(0, 7),
+      },
+      {
+        userId: sophie.id,
+        type: "escalation_responded",
+        title: "Escalation response received",
+        body: "Marcus Johnson responded to your escalation on \"Streaming pipeline setup\".",
+        link: `/projects/${p2.id}?tab=escalations`,
+        read: true,
+        createdAt: dt(-3, 11),
+      },
+      // ── Yuki (senior dev, p3) — task status changed (blocked scenario) ────
+      {
+        userId: yuki.id,
+        type: "task_status_changed",
+        title: "Task blocked",
+        body: "\"Frontend integration tests\" has been marked as blocked and may need attention.",
+        link: `/projects/${p3.id}?tab=tasks`,
+        read: false,
+        createdAt: dt(0, 9),
+      },
+    ],
+  });
+
   // ─── Summary ──────────────────────────────────────────────────────────────
   console.log("✅ Seed complete!");
   console.log(`   • Users: 19 (3 managers, 6 senior devs, 10 developers)`);
@@ -1198,9 +1407,10 @@ async function main() {
   console.log(`   • Risks: 8`);
   console.log(`   • Escalations: 6`);
   console.log(`   • Availability entries: 15`);
-  console.log(`   • Meetings: 7`);
+  console.log(`   • Meetings: 8`);
   console.log(`   • Project chat messages: 14`);
   console.log(`   • Task comments: 9`);
+  console.log(`   • Notifications: 21`);
   console.log(``);
   console.log("🔑 Demo login credentials:");
   console.log("   Manager      → sarah@namo.dev   / manager123");

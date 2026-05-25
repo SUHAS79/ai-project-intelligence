@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type TokenPayload } from "@/lib/roles";
 import { useState } from "react";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 // Nav items per role
 const MANAGER_NAV = [
@@ -130,10 +131,15 @@ export default function Sidebar({ user, isOpen = false, onClose }: SidebarProps)
         })}
       </nav>
 
-      {/* User card + Logout */}
+      {/* Notifications + User card + Logout */}
       <div className="px-3 pb-4 border-t border-white/[0.06] pt-3">
         {user ? (
           <>
+            {/* Notifications bell — opens dropdown to the right */}
+            <div className="mb-1">
+              <NotificationsDropdown placement="sidebar" />
+            </div>
+
             {/* User card */}
             <Link
               href="/profile"

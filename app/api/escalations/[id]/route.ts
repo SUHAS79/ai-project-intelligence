@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { notify } from "@/lib/notify";
 
 const RespondSchema = z.object({
   action: z.enum(["respond", "resolve"]),
@@ -57,6 +58,18 @@ export async function PATCH(
       respondedBy: { select: { id: true, fullName: true, initials: true } },
     },
   });
+
+  // Notify the escalation creator about the response/resolution
+  if (escalation.createdById !== user.userId) {
+    const isResolved = action === "resolve";
+    await notify(
+      escalation.createdById,
+      isResolved ? "escalation_resolved" : "escalation_responded",
+      isResolved ? "Escalation resolved" : "Escalation response received",
+      `${user.fullName} ${isResolved ? "resolved" : "responded to"} your escalation${updated.task ? ` on "${updated.task.title}"` : ""}.`,
+      `/projects/${escalation.projectId}?tab=escalations`
+    );
+  }
 
   return NextResponse.json(updated);
 }

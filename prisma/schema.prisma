@@ -30,6 +30,20 @@ model User {
   participatingIn      Meeting[]       @relation("MeetingParticipant")
   taskComments         TaskComment[]
   projectMessages      ProjectMessage[]
+  notifications        Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // task_assigned | task_reassigned | task_status_changed | task_submitted_for_review | task_approved | task_rejected | escalation_received | escalation_responded | escalation_resolved | meeting_created | project_assigned
+  title     String
+  body      String
+  link      String?  // relative URL to navigate to
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Availability {

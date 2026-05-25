@@ -262,6 +262,16 @@
 - [x] Dev/senior project listing shows only user-relevant data (no analytics)
 - [x] Meeting creation scoped to accessible projects per role
 
+### Feature 14 — In-App Notifications Center ✅ (2026-05-25)
+- [x] `Notification` model: userId, type, title, body, link (relative URL), read, createdAt
+- [x] Prisma migration `add-notifications`; cascade-delete on User
+- [x] `lib/notify.ts` — `notify()`, `notifyMany()`, `getProjectMemberIdsByRole()` — all non-throwing
+- [x] API: `GET /api/notifications` (last 50 + unreadCount), `PATCH /api/notifications` (mark all), `PATCH /api/notifications/[id]` (mark one)
+- [x] `NotificationsDropdown` — bell with badge, 30s poll, mark-as-read, navigate-on-click, Escape/outside-click close; `placement="sidebar"` (opens right) or `placement="topbar"` (opens down)
+- [x] Bell in Sidebar (desktop) + mobile top bar (AppShellClient)
+- [x] Triggers: task assigned, task reassigned, task blocked, submitted for review, approved, rejected, reopened, escalation received/responded/resolved, meeting created (team/individual), project assigned
+- [x] 21 seed notifications across roles with realistic read/unread states
+
 ### Fix — Meeting Queries, Project Chat & Dev Views ✅ (2026-05-25)
 - [x] `app/api/meetings/[id]/route.ts`: `participant` added to local `MEETING_INCLUDE` — was missing, causing `PrismaClientValidationError: Unknown field 'participant'` at runtime
 - [x] Root cause: `lib/prisma.ts` Prisma singleton on `globalThis` caches old client (pre-migration); fix = kill + restart server after `npx prisma generate`

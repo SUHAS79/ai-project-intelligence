@@ -349,6 +349,31 @@
 - [x] Meetings: project-first creation; dev/senior can only create meetings for their projects
 - [x] 0 TypeScript errors; build passes
 
+## ✅ Feature 14 — In-App Notifications Center (Completed 2026-05-25)
+- [x] `Notification` Prisma model: userId, type, title, body, link, read, createdAt
+- [x] Prisma migration: `add-notifications`; User.notifications relation added
+- [x] `lib/notify.ts`: `notify()` (single) + `notifyMany()` (batch) + `getProjectMemberIdsByRole()` helper
+  - All wrapped in try/catch — notification failures never break the triggering action
+- [x] `GET /api/notifications` — last 50 for current user + unreadCount
+- [x] `PATCH /api/notifications` — mark ALL as read
+- [x] `PATCH /api/notifications/[id]` — mark single as read (ownership-verified)
+- [x] `NotificationsDropdown.tsx` — bell icon + dropdown with unread badge, 30s polling, mark-as-read, navigate-on-click, keyboard (Escape) + outside-click to close
+- [x] Sidebar.tsx: bell row in footer section (opens dropdown to the right of sidebar)
+- [x] AppShellClient.tsx: bell in mobile top bar (opens dropdown downward)
+- [x] Notification triggers added to:
+  - `POST /api/projects/[id]/tasks` → assignee notified ("task_assigned")
+  - `PUT /api/tasks/[id]` → new assignee notified ("task_reassigned"); project senior devs + managers notified on BLOCKED ("task_status_changed")
+  - `POST /api/tasks/[id]/review` (submit) → project senior devs + managers notified ("task_submitted_for_review")
+  - `PATCH /api/tasks/[id]/review` (approve) → assignee notified ("task_approved")
+  - `PATCH /api/tasks/[id]/review` (reject) → assignee notified ("task_rejected")
+  - `PATCH /api/tasks/[id]/review` (reopen) → assignee notified ("task_status_changed")
+  - `POST /api/escalations` → target-role members on project notified ("escalation_received")
+  - `PATCH /api/escalations/[id]` → escalation creator notified ("escalation_responded" / "escalation_resolved")
+  - `POST /api/meetings` → all project members notified for team meetings; participant only for 1-on-1 ("meeting_created")
+  - `PUT /api/users/[id]/projects` → user notified for each new project assignment ("project_assigned")
+- [x] Seed: 21 demo notifications across managers, senior devs, and developers with realistic unread/read states
+- [x] 0 TypeScript errors; server restarted with fresh Prisma client
+
 ## ✅ Fix — Meeting Queries, Project Chat & Dev Views (Completed 2026-05-25)
 - [x] `app/api/meetings/[id]/route.ts`: added `participant` to local `MEETING_INCLUDE` (was missing — caused `PrismaClientValidationError: Unknown field 'participant'`)
 - [x] Root cause identified: `lib/prisma.ts` global singleton caches old Prisma client on `globalThis`; server must be fully restarted after `npx prisma generate` for new relations to take effect

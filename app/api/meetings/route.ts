@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { notify, notifyMany } from "@/lib/notify";
 
 const CreateMeetingSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -94,6 +95,37 @@ export async function POST(req: NextRequest) {
     },
     include: MEETING_INCLUDE,
   });
+
+  // Notify project members about the new meeting
+  const projectMembers = await prisma.projectMember.findMany({
+    where: { projectId },
+    select: { userId: true },
+  });
+  const memberIds = projectMembers
+    .map((m) => m.userId)
+    .filter((uid) => uid !== user.userId);
+
+  if (meetingType === "individual" && participantId) {
+    // 1-on-1: notify only the participant
+    if (participantId !== user.userId) {
+      await notify(
+        participantId,
+        "meeting_created",
+        "1-on-1 meeting scheduled",
+        `${user.fullName} scheduled a 1-on-1 meeting with you: "${title}".`,
+        "/meetings"
+      );
+    }
+  } else {
+    // Team meeting: notify all project members
+    await notifyMany(
+      memberIds,
+      "meeting_created",
+      "New team meeting scheduled",
+      `${user.fullName} scheduled "${title}" for ${meeting.project?.name ?? "your project"}.`,
+      "/meetings"
+    );
+  }
 
   return NextResponse.json(meeting, { status: 201 });
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import type { TokenPayload } from "@/lib/roles";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 interface AppShellClientProps {
   user: TokenPayload | null;
@@ -36,7 +37,10 @@ export function AppShellClient({ user, children }: AppShellClientProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm font-bold text-white tracking-tight">NAMO</span>
+          <span className="text-sm font-bold text-white tracking-tight flex-1">NAMO</span>
+          {user && (
+            <NotificationsDropdown placement="topbar" />
+          )}
         </div>
 
         <main className="flex-1">

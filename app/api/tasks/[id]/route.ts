@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
+import { notify, notifyMany, getProjectMemberIdsByRole } from "@/lib/notify";
 
 const TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "DONE"] as const;
 
@@ -54,6 +56,12 @@ export async function PUT(
     const body = await request.json();
     const { dependencyIds, assignedToId, ...taskData } = UpdateTaskSchema.parse(body);
 
+    // Fetch old task state before mutation (for diff-based notifications)
+    const oldTask = await prisma.task.findUnique({
+      where: { id },
+      select: { title: true, status: true, assignedToId: true, projectId: true },
+    });
+
     // Auto-set completedAt when status changes to DONE
     if (taskData.status === "DONE" && !taskData.completedAt) {
       (taskData as any).completedAt = new Date();
@@ -93,6 +101,50 @@ export async function PUT(
       },
       include: TASK_INCLUDE,
     });
+
+    // ── Post-update notifications (fire-and-forget) ───────────────────────
+    if (oldTask) {
+      const actor = await getUserFromToken().catch(() => null);
+      const actorId = actor?.userId;
+      const projectId = oldTask.projectId;
+      const taskLink = `/projects/${projectId}?tab=tasks`;
+
+      // 1. Task reassigned — notify the NEW assignee (if changed and not the actor)
+      const newAssigneeId = ownerUpdate.assignedToId ?? undefined;
+      if (
+        newAssigneeId &&
+        newAssigneeId !== oldTask.assignedToId &&
+        newAssigneeId !== actorId
+      ) {
+        const project = await prisma.project
+          .findUnique({ where: { id: projectId }, select: { name: true } })
+          .catch(() => null);
+        await notify(
+          newAssigneeId,
+          "task_reassigned",
+          "Task assigned to you",
+          `"${oldTask.title}" in ${project?.name ?? "a project"} has been assigned to you.`,
+          taskLink
+        );
+      }
+
+      // 2. Task became BLOCKED — notify project managers + senior devs
+      if (taskData.status === "BLOCKED" && oldTask.status !== "BLOCKED") {
+        const escalateeIds = await getProjectMemberIdsByRole(
+          projectId,
+          ["manager", "senior_developer"],
+          actorId
+        );
+        await notifyMany(
+          escalateeIds,
+          "task_status_changed",
+          "Task blocked",
+          `"${oldTask.title}" has been marked as blocked and may need attention.`,
+          taskLink
+        );
+      }
+    }
+
     return Response.json(task);
   } catch (error) {
     if (error instanceof z.ZodError) {

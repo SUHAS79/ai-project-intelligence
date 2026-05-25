@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/auth";
 import { z } from "zod";
+import { notifyMany } from "@/lib/notify";
 
 async function requireManager() {
   const payload = await getUserFromToken();
@@ -62,6 +63,15 @@ export async function PUT(
   const toAdd = projectIds.filter((pid) => !currentIds.has(pid));
   const toRemove = [...currentIds].filter((pid) => !newIds.has(pid));
 
+  // Fetch project names for notification bodies (only for newly added projects)
+  const addedProjects =
+    toAdd.length > 0
+      ? await prisma.project.findMany({
+          where: { id: { in: toAdd } },
+          select: { id: true, name: true },
+        })
+      : [];
+
   // Apply diff in a transaction
   await prisma.$transaction([
     ...(toRemove.length > 0
@@ -71,6 +81,17 @@ export async function PUT(
       prisma.projectMember.create({ data: { projectId, userId: id } })
     ),
   ]);
+
+  // Notify user about each newly added project (skip if they added themselves, which managers can't do)
+  for (const proj of addedProjects) {
+    await notifyMany(
+      [id],
+      "project_assigned",
+      "Added to a project",
+      `${manager.fullName} added you to "${proj.name}".`,
+      `/projects/${proj.id}`
+    );
+  }
 
   // Return updated list
   const updated = await prisma.projectMember.findMany({
