@@ -466,6 +466,28 @@
 - [x] Zero breaking changes — app works identically in dev without any env vars configured
 - [x] 0 TypeScript errors; commit: 9d5f8e8
 
+## ✅ Feature 20 — Google Calendar / ICS Export (Completed 2026-05-25)
+- [x] `lib/ics.ts` — RFC 5545 compliant ICS builder
+  - `CalendarEvent` (allDay: true) + `TimedCalendarEvent` (allDay: false) TypeScript interfaces
+  - `buildICSFile(events, calName)` — full VCALENDAR string with line folding (>75 chars → CRLF + space per RFC 5545 §3.1)
+  - `buildGoogleCalendarUrl(opts)` — Google Calendar "Add to Calendar" URL (no API key; works with Google account)
+  - Pure utility — no server-only imports; safe to use in client components
+- [x] `GET /api/projects/[id]/export/ics` — role-scoped task calendar download
+  - Manager: all project tasks; Dev/Senior: only their own assigned tasks
+  - Each task → all-day VEVENT: DTSTART=startDate, DTEND=endDate+1day (RFC 5545 exclusive end), DESCRIPTION includes status/priority/assignee
+  - Returns `Content-Type: text/calendar` with `Content-Disposition: attachment; filename="…-tasks.ics"`
+- [x] `GET /api/meetings/[id]/ics` — single-event ICS download per meeting
+  - Timed VEVENT: start = scheduledAt (falls back to createdAt for on-demand meetings), end = start + 1 hour
+  - DESCRIPTION includes project name, meeting type (1-on-1 / Team), organizer, Jitsi join link
+  - URL field set to Jitsi room URL
+- [x] `ProjectHub` — "Export .ics" download anchor in project header (visible to all roles)
+  - Simple `<a href="/api/projects/[id]/export/ics" download>` with Download icon; no JS required
+- [x] `MeetingsClient` — Google Calendar + ICS buttons on each MeetingCard (only when scheduledAt is set)
+  - `CalendarPlus` icon → opens Google Calendar with event pre-filled in new tab
+  - `Download` icon → downloads `.ics` file via `GET /api/meetings/[id]/ics`
+  - `buildGCalUrl()` helper inline in component (computes 1-hour window from scheduledAt)
+- [x] 0 TypeScript errors; commit: 2dbe1b8
+
 ## 🔜 Phase 3 — Polish (Remaining)
 - [ ] Dark mode toggle (sidebar already dark; need content area dark: classes)
 - [ ] Custom confirm modal (replace browser `confirm()` dialogs)

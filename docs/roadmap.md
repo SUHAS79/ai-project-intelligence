@@ -345,6 +345,23 @@
 - [x] `.env`: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL` (all commented out — opt-in)
 - [x] Zero config needed in dev — emails silently skip without breaking any existing flow
 
+### Feature 20 — Google Calendar / ICS Export ✅ (2026-05-25)
+- [x] `lib/ics.ts` — RFC 5545 ICS builder (`buildICSFile`) + Google Calendar URL helper (`buildGoogleCalendarUrl`)
+  - `CalendarEvent` (allDay: true, for tasks) + `TimedCalendarEvent` (allDay: false, for meetings)
+  - Line folding: lines >75 octets wrapped with CRLF + single space per RFC 5545 §3.1
+  - Pure utility — no server-only imports; safe in client components
+- [x] `GET /api/projects/[id]/export/ics` — role-scoped project task calendar download
+  - Manager: all tasks; Dev/Senior: only their own assigned tasks
+  - All-day VEVENTs with DTSTART=startDate, DTEND=endDate+1day (RFC 5545 exclusive end)
+  - `Content-Disposition: attachment` triggers native browser download
+- [x] `GET /api/meetings/[id]/ics` — single-event timed ICS for a meeting
+  - Timed VEVENT: scheduledAt → scheduledAt+1h (falls back to createdAt for on-demand meetings)
+  - DESCRIPTION includes project, type, organizer, and Jitsi join URL
+- [x] `ProjectHub` header: "Export .ics" download anchor (all roles, no auth wall — uses existing session)
+- [x] `MeetingsClient`: per-card Google Calendar + ICS download buttons when `scheduledAt` is present
+  - Google Calendar: opens `calendar.google.com/calendar/render?action=TEMPLATE&...` — no API key needed
+  - ICS: downloads via the meeting ICS endpoint
+
 ---
 
 ## Next Priorities (Phase 3)

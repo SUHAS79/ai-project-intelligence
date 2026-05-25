@@ -79,6 +79,8 @@ app/
     templates/[id]/       GET → template detail | DELETE
     templates/[id]/apply/ POST → create project from template (body: name, startDate, optional endDate)
     search/               GET ?q= → role-scoped search across projects, tasks, people (min 2 chars, max 6 results/category)
+    projects/[id]/export/ics/  GET → role-scoped .ics download (all-day VEVENT per task; Content-Disposition attachment)
+    meetings/[id]/ics/         GET → single-event .ics download for a meeting (timed event, scheduledAt → +1h)
     seed/                 POST → re-seeds demo data
 
 components/
@@ -95,8 +97,11 @@ components/
   EscalationsSection.tsx  Shared card list component for escalations (used in both dashboards); has "Thread" button per escalation if task attached
   SLABadge.tsx            Reusable elapsed-time urgency badge — type "review" (OK<24h, Warn 24-72h, Overdue>72h) or "escalation" (OK<4h, Warn 4-24h, Overdue>24h)
   GlobalSearch.tsx        Command-palette modal — Cmd/Ctrl+K shortcut; responds to CustomEvent("namo:search:open"); fetches /api/search?q=
+  MeetingsClient.tsx      Meeting list with Live/Scheduled/Past sections; CalendarPlus (Google Calendar) + Download (.ics) per card when scheduledAt set
 
 lib/
+  ics.ts                 RFC 5545 ICS builder — buildICSFile(events, calName) + buildGoogleCalendarUrl(opts); pure util (no server imports)
+                          CalendarEvent (allDay:true) and TimedCalendarEvent (allDay:false) interfaces; folds lines >75 chars per RFC 5545 §3.1
   email.ts               Resend email module — sendEmail, sendEmailToUser, sendEmailToUsers, buildEmailHtml
                           Gracefully skips (console.log) when RESEND_API_KEY absent. Non-throwing.
   TemplatesModal.tsx      Manager-only modal listing project templates; triggers UseTemplateModal on "Use"
