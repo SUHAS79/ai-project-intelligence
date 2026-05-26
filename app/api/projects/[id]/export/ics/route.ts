@@ -6,7 +6,7 @@ import { buildICSFile } from "@/lib/ics";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getUserFromToken();
@@ -41,7 +41,13 @@ export async function GET(
     orderBy: { startDate: "asc" },
   });
 
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  // Prefer an explicit env override; otherwise derive the origin from the
+  // request so calendar links resolve correctly on every deployment.
+  const host = req.headers.get("host");
+  const proto = req.headers.get("x-forwarded-proto") ?? "http";
+  const APP_URL =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (host ? `${proto}://${host}` : "http://localhost:3000");
 
   const events = tasks.map((task) => ({
     uid: `task-${task.id}@namo.app`,
