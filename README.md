@@ -2,6 +2,8 @@
 
 **Predict projects before they slip.**
 
+🔗 **Live demo:** https://ai-project-intelligence.vercel.app — sign in with any demo account below (click a role group on the login page to quick-fill).
+
 A full-stack AI-powered project management tool that continuously analyzes your projects and surfaces risks, blockers, and forecasts — before your next standup.
 
 ---
@@ -83,7 +85,7 @@ All 19 demo accounts use the same password per role. On the login page, click an
 | Layer | Tech |
 |-------|------|
 | Framework | Next.js 16 (App Router, TypeScript) |
-| Database | SQLite + Prisma v7 |
+| Database | Prisma v7 — SQLite (local) · Turso / libSQL (production) |
 | Auth | JWT via jose + bcryptjs (role-based sessions) |
 | UI | Tailwind CSS v4 |
 | Charts | Recharts |
