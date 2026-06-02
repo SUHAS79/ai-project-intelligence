@@ -8,7 +8,12 @@ const JWT_SECRET = new TextEncoder().encode(
 const COOKIE_NAME = "namo-session";
 
 // Paths that don't require authentication
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/api/auth/login",
+  "/api/auth/register",
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
@@ -45,9 +50,9 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Public paths — but redirect already-logged-in users away from /login
+  // Public paths — but redirect already-logged-in users away from /login & /register
   if (isPublicPath(pathname)) {
-    if (pathname === "/login") {
+    if (pathname === "/login" || pathname === "/register") {
       const token = req.cookies.get(COOKIE_NAME)?.value;
       if (token) {
         try {

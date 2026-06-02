@@ -126,8 +126,8 @@ export function NotificationsDropdown({ placement = "sidebar" }: NotificationsDr
         className={cn(
           "relative flex items-center justify-center rounded-lg transition-colors",
           placement === "sidebar"
-            ? "w-full gap-2.5 px-2.5 py-2 text-[13px] font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5"
-            : "w-8 h-8 text-slate-400 hover:text-white hover:bg-white/10"
+            ? "w-full gap-2.5 px-2.5 py-2 text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            : "w-8 h-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
         )}
       >
         <Bell className="w-4 h-4 shrink-0" />
@@ -152,19 +152,19 @@ export function NotificationsDropdown({ placement = "sidebar" }: NotificationsDr
       {open && (
         <div
           className={cn(
-            "absolute w-80 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[100] overflow-hidden flex flex-col",
+            "absolute w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] overflow-hidden flex flex-col",
             dropdownPos
           )}
           style={{ maxHeight: "420px" }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] shrink-0">
-            <span className="text-[13px] font-semibold text-white">Notifications</span>
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 shrink-0">
+            <span className="text-[13px] font-semibold text-slate-900">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
                 disabled={markingAll}
-                className="flex items-center gap-1.5 text-[11px] text-violet-400 hover:text-violet-300 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 text-[11px] text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
               >
                 <CheckCheck className="w-3 h-3" />
                 Mark all read
@@ -176,9 +176,9 @@ export function NotificationsDropdown({ placement = "sidebar" }: NotificationsDr
           <div className="overflow-y-auto flex-1">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-                <Inbox className="w-6 h-6 text-slate-600 mb-2" />
+                <Inbox className="w-6 h-6 text-slate-300 mb-2" />
                 <p className="text-[12px] text-slate-500 font-medium">All caught up</p>
-                <p className="text-[11px] text-slate-600 mt-0.5">No notifications yet</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">No notifications yet</p>
               </div>
             ) : (
               notifications.map((n) => (
@@ -186,15 +186,15 @@ export function NotificationsDropdown({ placement = "sidebar" }: NotificationsDr
                   key={n.id}
                   onClick={() => handleItemClick(n)}
                   className={cn(
-                    "w-full text-left px-4 py-3 border-b border-white/[0.04] hover:bg-white/5 transition-colors flex items-start gap-2.5",
-                    !n.read && "bg-violet-500/[0.07]"
+                    "w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors flex items-start gap-2.5",
+                    !n.read && "bg-violet-50"
                   )}
                 >
                   {/* Unread dot */}
                   <span
                     className={cn(
                       "mt-1.5 w-1.5 h-1.5 rounded-full shrink-0",
-                      !n.read ? "bg-violet-500" : "bg-transparent"
+                      !n.read ? "bg-violet-600" : "bg-transparent"
                     )}
                   />
                   <div className="flex-1 min-w-0">
@@ -205,7 +205,7 @@ export function NotificationsDropdown({ placement = "sidebar" }: NotificationsDr
                       <p
                         className={cn(
                           "text-[12px] font-semibold leading-snug truncate",
-                          n.read ? "text-slate-400" : "text-white"
+                          n.read ? "text-slate-500" : "text-slate-900"
                         )}
                       >
                         {n.title}
@@ -214,7 +214,7 @@ export function NotificationsDropdown({ placement = "sidebar" }: NotificationsDr
                     <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-2 pl-5">
                       {n.body}
                     </p>
-                    <p className="text-[10px] text-slate-600 mt-1 pl-5">
+                    <p className="text-[10px] text-slate-400 mt-1 pl-5">
                       {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                     </p>
                   </div>

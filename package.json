@@ -11,7 +11,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:turso": "tsx scripts/turso-migrate.ts",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:wipe": "tsx scripts/wipe.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

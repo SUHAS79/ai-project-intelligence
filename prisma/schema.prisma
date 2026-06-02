@@ -15,7 +15,7 @@ model User {
   fullName             String
   email                String          @unique
   password             String
-  role                 String          @default("developer") // manager | developer | senior_developer
+  role                 String          @default("developer") // manager | developer | senior_developer | other
   status               String          @default("active")    // active | inactive
   initials             String
   createdAt            DateTime        @default(now())

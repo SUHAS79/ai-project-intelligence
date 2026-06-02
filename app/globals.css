@@ -4,6 +4,16 @@
   --background: #f1f5f9;
   --foreground: #0f172a;
   --sidebar-width: 232px;
+
+  /* Brand accent = Blue. The violet and indigo palettes resolve to these. */
+  --brand-50:  #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-200: #bfdbfe;
+  --brand-300: #93c5fd;
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
 }
 
 @theme inline {
@@ -11,6 +21,31 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* Remap the violet palette to the brand variables so every existing
+   violet-* class across the app follows the chosen accent color.
+   `inline` makes utilities reference --brand-* directly for live swapping. */
+@theme inline {
+  --color-violet-50:  var(--brand-50);
+  --color-violet-100: var(--brand-100);
+  --color-violet-200: var(--brand-200);
+  --color-violet-300: var(--brand-300);
+  --color-violet-400: var(--brand-400);
+  --color-violet-500: var(--brand-500);
+  --color-violet-600: var(--brand-600);
+  --color-violet-700: var(--brand-700);
+
+  /* Indigo is used as the brand's gradient/accent partner across the app,
+     so remap it to the same scale — keeps everything on one accent. */
+  --color-indigo-50:  var(--brand-50);
+  --color-indigo-100: var(--brand-100);
+  --color-indigo-200: var(--brand-200);
+  --color-indigo-300: var(--brand-300);
+  --color-indigo-400: var(--brand-400);
+  --color-indigo-500: var(--brand-500);
+  --color-indigo-600: var(--brand-600);
+  --color-indigo-700: var(--brand-700);
 }
 
 * {
